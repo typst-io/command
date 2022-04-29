@@ -1,0 +1,7 @@
+rootProject.name = 'command'
+
+include('core', 'bukkit')
+
+rootProject.children.forEach { project ->
+    project.name = "command-${project.name}"
+}
