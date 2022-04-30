@@ -25,5 +25,8 @@ MyCommand algebra = Command.parseO(args, command).orElse(null);
 if (algebra instanceof MyCommand.AddItem) {
     MyCommand.AddItem addItem = (MyCommand.AddItem) algebra;
     println(String.format("Adding item %s, %s!", addItem.getIndex(), addItem.getName()));
+} else if (algebra instanceof MyCommand.RemoveItem) {
+    MyCommand.RemoveItem removeItem = (MyCommand.RemoveItem) algebra;
+    println(String.format("Removing item %s", removeItem.getIndex()));
 }
 ```
