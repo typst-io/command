@@ -1,6 +1,7 @@
 package io.typecraft.command;
 
 import io.vavr.*;
+import io.vavr.control.Either;
 import lombok.Data;
 
 import java.util.*;
@@ -34,10 +35,10 @@ public interface Command<A> {
     }
 
     @SafeVarargs
-    static <A> Command<A> map(Map.Entry<String, Command<A>>... entries) {
+    static <A> Command<A> map(Tuple2<String, Command<A>>... entries) {
         LinkedHashMap<String, Command<A>> map = new LinkedHashMap<>();
-        for (Map.Entry<String, Command<A>> entry : entries) {
-            map.put(entry.getKey(), entry.getValue());
+        for (Tuple2<String, Command<A>> entry : entries) {
+            map.put(entry._1(), entry._2());
         }
         return new Mapping<>(map);
     }
@@ -77,35 +78,35 @@ public interface Command<A> {
         throw new UnsupportedOperationException("TODO");
     }
 
-    static <K, V> Map.Entry<K, V> pair(K key, V value) {
-        return new AbstractMap.SimpleEntry<>(key, value);
+    static <K, V> Tuple2<K, V> pair(K key, V value) {
+        return new Tuple2<>(key, value);
     }
 
-    static <A> CommandParseResult<A> parse(String[] args, Command<A> command) {
+    static <A> Either<CommandFailure, CommandSuccess<A>> parse(String[] args, Command<A> command) {
         return parseWithIndex(0, args, command);
     }
 
-    static <A> CommandParseResult<A> parseWithIndex(int index, String[] args, Command<A> command) {
+    static <A> Either<CommandFailure, CommandSuccess<A>> parseWithIndex(int index, String[] args, Command<A> command) {
         String argument = args.length > index ? args[index] : null;
         if (command instanceof Mapping) {
             if (argument == null) {
-                return CommandParseResult.failure(new CommandFailure.FewArguments(args, index));
+                return Either.left(new CommandFailure.FewArguments(args, index));
             }
             Mapping<A> mapCommand = (Mapping<A>) command;
             Command<A> subCommand = mapCommand.getMap().get(argument);
             return subCommand != null
                     ? parseWithIndex(index + 1, args, subCommand)
-                    : CommandParseResult.failure(new CommandFailure.UnknownSubCommand(args, index));
+                    : Either.left(new CommandFailure.UnknownSubCommand(args, index));
         } else if (command instanceof Present) {
             Present<A> present = (Present<A>) command;
-            return CommandParseResult.success(new CommandSuccess<>(args, index, present.getValue()));
+            return Either.right(new CommandSuccess<>(args, index, present.getValue()));
         } else if (command instanceof Parser) {
             Parser<A> parser = (Parser<A>) command;
             List<String> list = new ArrayList<>(Arrays.asList(Arrays.copyOfRange(args, index, args.length)));
             A a = parser.getParser().apply(list.iterator()).orElse(null);
             return a != null
-                    ? CommandParseResult.success(new CommandSuccess<>(new String[0], args.length, a))
-                    : CommandParseResult.failure(new CommandFailure.ParsingFailure(parser.getNames()));
+                    ? Either.right(new CommandSuccess<>(new String[0], args.length, a))
+                    : Either.left(new CommandFailure.ParsingFailure(parser.getNames()));
         }
         throw new UnsupportedOperationException();
     }

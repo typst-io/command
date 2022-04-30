@@ -1,6 +1,7 @@
 package io.typecraft.command;
 
 
+import io.vavr.control.Either;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -97,7 +98,7 @@ public class CommandTest {
     public void unit() {
         String[] args = new String[0];
         assertEquals(
-                CommandParseResult.failure(new CommandFailure.FewArguments(args, 0)),
+                Either.left(new CommandFailure.FewArguments(args, 0)),
                 Command.parse(args, rootCommand)
         );
     }
@@ -106,7 +107,7 @@ public class CommandTest {
     public void sub() {
         String[] args = new String[]{"item"};
         assertEquals(
-                CommandParseResult.failure(new CommandFailure.FewArguments(args, 1)),
+                Either.left(new CommandFailure.FewArguments(args, 1)),
                 Command.parse(args, rootCommand)
         );
     }
@@ -115,7 +116,7 @@ public class CommandTest {
     public void subUnknown() {
         String[] args = new String[]{"item", "unknownCommand"};
         assertEquals(
-                CommandParseResult.failure(new CommandFailure.UnknownSubCommand(args, 1)),
+                Either.left(new CommandFailure.UnknownSubCommand(args, 1)),
                 Command.parse(args, rootCommand)
         );
     }
@@ -124,7 +125,7 @@ public class CommandTest {
     public void present() {
         String[] args = new String[]{"item", "open"};
         assertEquals(
-                CommandParseResult.success(new CommandSuccess<>(args, 2, new OpenItemList())),
+                Either.right(new CommandSuccess<>(args, 2, new OpenItemList())),
                 Command.parse(args, rootCommand)
         );
     }
@@ -135,7 +136,7 @@ public class CommandTest {
         String name = "someName";
         String[] args = new String[]{"item", "add", String.valueOf(index), name};
         assertEquals(
-                CommandParseResult.success(new CommandSuccess<>(new String[0], args.length, new AddItem(index, name))),
+                Either.right(new CommandSuccess<>(new String[0], args.length, new AddItem(index, name))),
                 Command.parse(args, rootCommand)
         );
     }
