@@ -25,6 +25,7 @@ test {
 }
 
 spigot {
+    name 'BukkitCommand'
     commands {
         create('bukkitcommand') {
             aliases = ['command', 'cmd']
