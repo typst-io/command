@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'kr.entree.spigradle' version '2.3.4'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 group 'io.typecraft'
@@ -11,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":command-core"))
+    shadow(project(":command-core"))
     compileOnly spigot('1.16.5')
     compileOnly lombok()
     annotationProcessor lombok()
@@ -22,3 +23,17 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+spigot {
+    commands {
+        create('bukkitcommand') {
+            aliases = ['command', 'cmd']
+        }
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.runtimeClasspath, project.configurations.shadow]
+}
+
+assemble.dependsOn(shadowJar)

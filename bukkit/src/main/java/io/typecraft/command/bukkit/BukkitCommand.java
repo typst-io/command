@@ -2,6 +2,7 @@ package io.typecraft.command.bukkit;
 
 import io.typecraft.command.Command;
 import io.typecraft.command.*;
+import io.vavr.control.Either;
 import org.bukkit.command.*;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -32,12 +33,12 @@ public class BukkitCommand {
     }
 
     public static <A> Optional<CommandSuccess<A>> execute(CommandSender sender, String[] args, Command<A> command) {
-        CommandParseResult<A> result = Command.parse(args, command);
-        if (result instanceof CommandParseResult.Success) {
-            CommandSuccess<A> success = ((CommandParseResult.Success<A>) result).getSuccess();
+        Either<CommandFailure,  CommandSuccess<A>> result = Command.parse(args, command);
+        if (result.isRight()) {
+            CommandSuccess<A> success = result.get();
             return Optional.of(success);
-        } else if (result instanceof CommandParseResult.Failure) {
-            CommandFailure failure = ((CommandParseResult.Failure<A>) result).getFailure();
+        } else if (result.isLeft()) {
+            CommandFailure failure = result.getLeft();
             sender.sendMessage(getFailureMessage(failure));
         }
         return Optional.empty();

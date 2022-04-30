@@ -33,7 +33,7 @@ public class Argument<A> {
 
     public static <A, B, C> Argument<Tuple3<A, B, C>> product(Argument<A> xa, Argument<B> xb, Argument<C> xc) {
         return new Argument<>(
-                flatten(Stream.of(xa.getNames(), xb.getNames())),
+                flatten(Stream.of(xa.getNames(), xb.getNames(), xc.getNames())),
                 strs -> {
                     Optional<A> aO = xa.getParser().apply(strs);
                     Optional<B> bO = xb.getParser().apply(strs);
