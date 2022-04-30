@@ -86,6 +86,10 @@ public interface Command<A> {
         return parseWithIndex(0, args, command);
     }
 
+    static <A> Optional<A> parseO(String[] args, Command<A> command) {
+        return parse(args, command).toJavaOptional().map(CommandSuccess::getCommand);
+    }
+
     static <A> Either<CommandFailure, CommandSuccess<A>> parseWithIndex(int index, String[] args, Command<A> command) {
         String argument = args.length > index ? args[index] : null;
         if (command instanceof Mapping) {
