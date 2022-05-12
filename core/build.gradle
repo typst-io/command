@@ -5,9 +5,6 @@ plugins {
     id 'signing'
 }
 
-group 'io.typecraft'
-version '0.1.0-SNAPSHOT'
-
 repositories {
     mavenCentral()
 }

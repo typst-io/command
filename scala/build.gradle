@@ -1,0 +1,17 @@
+plugins {
+    id 'scala'
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.scala-lang:scala-library:2.13.8'
+    api(project(':command-core'))
+}
+
+registerPublish(this)
