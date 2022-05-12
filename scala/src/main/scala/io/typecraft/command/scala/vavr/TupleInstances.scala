@@ -1,4 +1,4 @@
-package io.typecraft.command.scala
+package io.typecraft.command.scala.vavr
 
 import io.vavr.API.Tuple
 

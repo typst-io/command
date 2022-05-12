@@ -1,3 +1,5 @@
 package io.typecraft.command.scala
 
-object implicits extends TupleInstances
+import io.typecraft.command.scala.vavr.{EitherInstances, TupleInstances}
+
+object implicits extends TupleInstances with EitherInstances
