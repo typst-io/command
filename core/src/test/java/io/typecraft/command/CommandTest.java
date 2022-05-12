@@ -7,27 +7,13 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
-import java.util.Optional;
 
+import static io.typecraft.command.Argument.intArg;
+import static io.typecraft.command.Argument.strArg;
 import static io.typecraft.command.Command.pair;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CommandTest {
-    private static final Argument<String> strArg = new Argument<>(
-            Collections.singletonList("string"),
-            strs -> strs.hasNext() ? Optional.of(strs.next()) : Optional.empty()
-    );
-    private static final Argument<Integer> intArg = new Argument<>(
-            Collections.singletonList("int"),
-            strs -> strArg.getParser().apply(strs)
-                    .flatMap(str -> {
-                        try {
-                            return Optional.of(Integer.parseInt(str));
-                        } catch (Exception ex) {
-                            return Optional.empty();
-                        }
-                    })
-    );
     // MyCommand = AddItem | RemoveItem | ...
     private static final Command<MyCommand> rootCommand =
             Command.map(

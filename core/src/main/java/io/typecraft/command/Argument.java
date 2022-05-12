@@ -5,10 +5,7 @@ import io.vavr.Tuple3;
 import lombok.Data;
 import lombok.With;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -19,6 +16,14 @@ import java.util.stream.Stream;
 public class Argument<A> {
     private final List<String> names;
     private final Function<Iterator<String>, Optional<A>> parser;
+    public static final Argument<String> strArg =
+            of("string", args -> args.hasNext() ? Optional.of(args.next()) : Optional.empty());
+    public static final Argument<Integer> intArg =
+            of("int", args -> args.hasNext() ? parseInt(args.next()) : Optional.empty());
+
+    public static <A> Argument<A> of(String name, Function<Iterator<String>, Optional<A>> parser) {
+        return new Argument<>(Collections.singletonList(name), parser);
+    }
 
     public static <A, B> Argument<Tuple2<A, B>> product(Argument<A> xa, Argument<B> xb) {
         return new Argument<>(
@@ -47,5 +52,13 @@ public class Argument<A> {
         return xs
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
+    }
+
+    private static Optional<Integer> parseInt(String s) {
+        try {
+            return Optional.of(Integer.parseInt(s));
+        } catch (Exception ex) {
+            return Optional.empty();
+        }
     }
 }
