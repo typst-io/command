@@ -7,6 +7,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Collections;
 
+import static io.typecraft.command.Argument.intArg;
 import static io.typecraft.command.Argument.strArg;
 import static io.typecraft.command.Command.pair;
 
@@ -33,6 +34,9 @@ public class CommandBukkitPlugin extends JavaPlugin {
         } else if (command instanceof MyCommand.ItemRemove) {
             MyCommand.ItemRemove itemRemove = (MyCommand.ItemRemove) command;
             sender.sendMessage("Remove item! " + itemRemove.getName());
+        } else if (command instanceof MyCommand.ItemPage) {
+            MyCommand.ItemPage itemPage = ((MyCommand.ItemPage) command);
+            sender.sendMessage("Paging item! " + itemPage.getPage());
         }
     }
 
@@ -43,7 +47,8 @@ public class CommandBukkitPlugin extends JavaPlugin {
                         pair("add", Command.argument(ItemAdd::new, strArg.withName("이름"))
                                 .withDescription("아이템을 추가합니다.")),
                         pair("remove", Command.argument(ItemRemove::new, strArg.withName("이름"))
-                                .withDescription("아이템을 제거합니다."))
+                                .withDescription("아이템을 제거합니다.")),
+                        pair("page", Command.argument(ItemPage::new, intArg.withName("페이지")))
                 )),
                 pair("reload", Command.present(new MyCommand.Reload()).withDescription("리로드합니다."))
         );
@@ -59,6 +64,11 @@ public class CommandBukkitPlugin extends JavaPlugin {
         @Data
         class ItemRemove implements MyCommand {
             private final String name;
+        }
+
+        @Data
+        class ItemPage implements MyCommand {
+            private final Number page;
         }
     }
 }
