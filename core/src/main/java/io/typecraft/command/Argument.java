@@ -25,6 +25,10 @@ public class Argument<A> {
         return new Argument<>(Collections.singletonList(name), parser);
     }
 
+    public Argument<A> withName(String name) {
+        return withNames(Collections.singletonList(name));
+    }
+
     public static <A, B> Argument<Tuple2<A, B>> product(Argument<A> xa, Argument<B> xb) {
         return new Argument<>(
                 flatten(Stream.of(xa.getNames(), xb.getNames())),

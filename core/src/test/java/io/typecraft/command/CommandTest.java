@@ -4,27 +4,32 @@ package io.typecraft.command;
 import io.vavr.control.Either;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.typecraft.command.Argument.intArg;
 import static io.typecraft.command.Argument.strArg;
 import static io.typecraft.command.Command.pair;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class CommandTest {
     // MyCommand = AddItem | RemoveItem | ...
+    private static final Command<MyCommand> itemCommand =
+            Command.compound(
+                    pair("open", Command.present(new OpenItemList()).withDescription("아이템 목록을 엽니다.")),
+                    // intArg: Argument<Integer>
+                    // strArg: Argument<String>
+                    pair("add", Command.argument(AddItem::new, intArg, strArg)),
+                    pair("remove", Command.argument(RemoveItem::new, intArg))
+            );
+    private static final Command<MyCommand> reloadCommand =
+            Command.<MyCommand>present(new ReloadCommand()).withDescription("리로드합니다.");
     private static final Command<MyCommand> rootCommand =
-            Command.map(
-                    pair("item", Command.map(
-                            pair("open", Command.present(new OpenItemList())),
-                            // intArg: Argument<Integer>
-                            // strArg: Argument<String>
-                            pair("add", Command.argument(AddItem::new, intArg, strArg)),
-                            pair("remove", Command.argument(RemoveItem::new, intArg))
-                    )),
-                    pair("reload", Command.present(new ReloadCommand()))
+            Command.compound(
+                    pair("item", itemCommand),
+                    pair("reload", reloadCommand)
             );
 
     public interface MyCommand {
@@ -84,7 +89,7 @@ public class CommandTest {
     public void unit() {
         String[] args = new String[0];
         assertEquals(
-                Either.left(new CommandFailure.FewArguments(args, 0)),
+                Either.left(new CommandFailure.FewArguments<>(args, 0, rootCommand)),
                 Command.parse(args, rootCommand)
         );
     }
@@ -93,7 +98,7 @@ public class CommandTest {
     public void sub() {
         String[] args = new String[]{"item"};
         assertEquals(
-                Either.left(new CommandFailure.FewArguments(args, 1)),
+                Either.left(new CommandFailure.FewArguments<>(args, 1, itemCommand)),
                 Command.parse(args, rootCommand)
         );
     }
@@ -102,7 +107,7 @@ public class CommandTest {
     public void subUnknown() {
         String[] args = new String[]{"item", "unknownCommand"};
         assertEquals(
-                Either.left(new CommandFailure.UnknownSubCommand(args, 1)),
+                Either.left(new CommandFailure.UnknownSubCommand<>(args, 1, itemCommand)),
                 Command.parse(args, rootCommand)
         );
     }
@@ -125,6 +130,39 @@ public class CommandTest {
                 Either.right(new CommandSuccess<>(new String[0], args.length, new AddItem(index, name))),
                 Command.parse(args, rootCommand)
         );
+    }
+
+    @Test
+    public void help() {
+        String[] args = new String[]{"item", "a"};
+        Either<CommandFailure<MyCommand>, CommandSuccess<MyCommand>> result = Command.parse(args, rootCommand);
+        CommandFailure<MyCommand> failure = result.getLeft();
+        if (failure instanceof CommandFailure.FewArguments) {
+            CommandFailure.FewArguments<MyCommand> fewArgs = (CommandFailure.FewArguments<MyCommand>) failure;
+            helpCommand(fewArgs.getArguments(), fewArgs.getIndex(), fewArgs.getCommand());
+        } else if (failure instanceof CommandFailure.UnknownSubCommand) {
+            CommandFailure.UnknownSubCommand<MyCommand> unknown = (CommandFailure.UnknownSubCommand<MyCommand>) failure;
+            helpCommand(unknown.getArguments(), unknown.getIndex(), unknown.getCommand());
+        }
+    }
+
+    private <A> void helpCommand(String[] args, int position, Command<A> cmd) {
+        String[] succArgs = args.length >= 1
+                ? Arrays.copyOfRange(args, 0, position)
+                : new String[0];
+        for (Map.Entry<List<String>, Command<A>> pair : Command.getEntries(cmd)) {
+            List<String> usageArgs = pair.getKey().stream()
+                    .flatMap(s -> Stream.concat(
+                            Arrays.stream(succArgs),
+                            Stream.of(s)
+                    ))
+                    .collect(Collectors.toList());
+            String description = Command.getSpec(pair.getValue()).getDescription();
+            String suffix = description.isEmpty()
+                    ? ""
+                    : " - " + description;
+            System.out.println("/" + String.join(" ", usageArgs) + suffix);
+        }
     }
 
     // tab
