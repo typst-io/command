@@ -42,8 +42,8 @@ public class CommandBukkitPlugin extends JavaPlugin {
 
     // MyCommand = Reload | Hello
     private interface MyCommand {
-        Command<MyCommand> command = Command.compound(
-                pair("item", Command.compound(
+        Command<MyCommand> command = Command.mapping(
+                pair("item", Command.mapping(
                         pair("add", Command.argument(ItemAdd::new, strArg.withName("이름"))
                                 .withDescription("아이템을 추가합니다.")),
                         pair("remove", Command.argument(ItemRemove::new, strArg.withName("이름"))

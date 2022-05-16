@@ -15,11 +15,11 @@ public interface Command<A> {
     <B> Command<B> map(Function<? super A, ? extends B> f);
 
     @Data
-    class Compound<A> implements Command<A> {
+    class Mapping<A> implements Command<A> {
         // TODO: i18n?
         private final Map<String, Command<A>> map;
 
-        private Compound(Map<String, Command<A>> map) {
+        private Mapping(Map<String, Command<A>> map) {
             this.map = map;
         }
 
@@ -29,7 +29,7 @@ public interface Command<A> {
             for (Map.Entry<String, Command<A>> pair : map.entrySet()) {
                 newMap.put(pair.getKey(), pair.getValue().map(f));
             }
-            return new Compound<>(newMap);
+            return new Mapping<>(newMap);
         }
     }
 
@@ -78,12 +78,12 @@ public interface Command<A> {
 
     @SuppressWarnings("unchecked") // covariant
     @SafeVarargs
-    static <A> Compound<A> compound(Tuple2<String, Command<? extends A>>... entries) {
+    static <A> Mapping<A> mapping(Tuple2<String, Command<? extends A>>... entries) {
         LinkedHashMap<String, Command<A>> map = new LinkedHashMap<>();
         for (Tuple2<String, Command<? extends A>> entry : entries) {
             map.put(entry._1(), (Command<A>) entry._2);
         }
-        return new Compound<>(map);
+        return new Mapping<>(map);
     }
 
     static <A> Present<A> present(A value) {
@@ -137,8 +137,8 @@ public interface Command<A> {
 
     static <A> Either<CommandFailure<A>, CommandSuccess<A>> parseWithIndex(int index, String[] args, Command<A> command) {
         String argument = args.length > index ? args[index] : null;
-        if (command instanceof Command.Compound) {
-            Compound<A> mapCommand = (Compound<A>) command;
+        if (command instanceof Command.Mapping) {
+            Mapping<A> mapCommand = (Mapping<A>) command;
             if (argument == null) {
                 return Either.left(new CommandFailure.FewArguments<>(args, index, mapCommand));
             }
@@ -166,8 +166,8 @@ public interface Command<A> {
 
     static <A> CommandTabResult<A> tabCompleteWithIndex(int index, String[] args, Command<A> command) {
         String argument = (args.length > index ? args[index] : "").toLowerCase();
-        if (command instanceof Command.Compound) {
-            Compound<A> mapCommand = (Compound<A>) command;
+        if (command instanceof Command.Mapping) {
+            Mapping<A> mapCommand = (Mapping<A>) command;
             // if tail
             if (index >= args.length - 1) {
                 return CommandTabResult.suggestion(
@@ -204,9 +204,9 @@ public interface Command<A> {
     }
 
     static <A> List<Map.Entry<List<String>, Command<A>>> getEntries(Command<A> cmd) {
-        if (cmd instanceof Command.Compound) {
-            Command.Compound<A> compound = (Command.Compound<A>) cmd;
-            return compound.getMap().entrySet().stream()
+        if (cmd instanceof Command.Mapping) {
+            Mapping<A> mapping = (Mapping<A>) cmd;
+            return mapping.getMap().entrySet().stream()
                     .flatMap(pair -> {
                         List<Map.Entry<List<String>, Command<A>>> subEntries = getEntries(pair.getValue());
                         return subEntries.size() >= 1

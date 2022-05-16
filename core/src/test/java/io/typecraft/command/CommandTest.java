@@ -17,7 +17,7 @@ public class CommandTest {
     private static final Argument<Integer> intTabArg = intArg.withTabCompleter(() -> Arrays.asList("10", "20"));
     // MyCommand = AddItem | RemoveItem | ...
     private static final Command<MyCommand> itemCommand =
-            Command.compound(
+            Command.mapping(
                     pair("open", Command.present(new OpenItemList()).withDescription("아이템 목록을 엽니다.")),
                     // intArg: Argument<Integer>
                     // strArg: Argument<String>
@@ -28,7 +28,7 @@ public class CommandTest {
     private static final Command<MyCommand> reloadCommand =
             Command.<MyCommand>present(new ReloadCommand()).withDescription("리로드합니다.");
     private static final Command<MyCommand> rootCommand =
-            Command.compound(
+            Command.mapping(
                     pair("item", itemCommand),
                     pair("reload", reloadCommand)
             );
