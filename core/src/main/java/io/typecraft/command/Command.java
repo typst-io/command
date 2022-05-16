@@ -108,11 +108,11 @@ public interface Command<A> {
     }
 
     static <T, A, B, C, D> Command<T> argument(Function4<? super A, ? super B, ? super C, ? super D, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD) {
-        throw new UnsupportedOperationException("TODO");
+        return argument(tup -> f.apply(tup._1(), tup._2(), tup._3(), tup._4()), Argument.product(argA, argB, argC, argD));
     }
 
     static <T, A, B, C, D, E> Command<T> argument(Function5<? super A, ? super B, ? super C, ? super D, ? super E, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE) {
-        throw new UnsupportedOperationException("TODO");
+        return argument(tup -> f.apply(tup._1(), tup._2(), tup._3(), tup._4(), tup._5()), Argument.product(argA, argB, argC, argD, argE));
     }
 
     static <T, A, B, C, D, E, F> Command<T> argument(Function6<? super A, ? super B, ? super C, ? super D, ? super E, ? super F, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE, Argument<F> argF) {
