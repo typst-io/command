@@ -1,6 +1,6 @@
 # Command
 
-A typesafe command line parser.
+A pure, functional, typesafe command line parser.
 
 ```java
 // core/src/test/../CommandTest.java
@@ -30,3 +30,37 @@ if (algebra instanceof MyCommand.AddItem) {
     println(String.format("Removing item %s", removeItem.getIndex()));
 }
 ```
+
+# FAQ
+
+## Why not just execute?
+
+```java
+Command<Void> node = Command.mapping(
+  pair("foo", Command.argument(integer -> {
+    GlobalVariables.someVar = integer;
+    System.out.println("Input is: " + integer); // here to break purity
+    return null;
+  }, intArg))
+)
+```
+
+### 1. Lines too long
+
+If you inline command implementation into the node declaration, it will easily to be ugly and hard to maintain.
+
+### 2. Concurrent
+
+You can't run `Command.parse` without synchronization, because it mutates global variable.
+
+### 3. Type safety
+
+Loose type safety even in typed programming language, you don't know what command is parsed.
+
+### 4. Testing
+
+Hard to test what it printed.
+
+### 5. Reusability
+
+Can't run the command implementation without parsing the command arguments.
