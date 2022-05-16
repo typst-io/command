@@ -7,6 +7,7 @@ import lombok.With;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -52,12 +53,14 @@ public interface Command<A> {
     @Data
     @With
     class Parser<A> implements Command<A> {
-        private final Function<Iterator<String>, Optional<A>> parser;
+        private final Function<List<String>, Tuple2<Optional<A>, List<String>>> parser;
+        private final List<Supplier<List<String>>> tabCompleters;
         private final List<String> names;
         private final String description;
 
-        private Parser(Function<Iterator<String>, Optional<A>> parser, List<String> names, String description) {
+        private Parser(Function<List<String>, Tuple2<Optional<A>, List<String>>> parser, List<Supplier<List<String>>> tabCompleters, List<String> names, String description) {
             this.parser = parser;
+            this.tabCompleters = tabCompleters;
             this.names = names;
             this.description = description;
         }
@@ -65,7 +68,8 @@ public interface Command<A> {
         @Override
         public <B> Command<B> map(Function<? super A, ? extends B> f) {
             return new Parser<>(
-                    args -> parser.apply(args).map(f),
+                    args -> parser.apply(args).map1(aO -> aO.map(f)),
+                    tabCompleters,
                     getNames(),
                     getDescription()
             );
@@ -88,7 +92,8 @@ public interface Command<A> {
 
     static <T, A> Parser<T> argument(Function<? super A, ? extends T> f, Argument<A> argument) {
         return new Parser<>(
-                strs -> argument.getParser().apply(strs).map(f),
+                args -> argument.getParser().apply(args).map1(aO -> aO.map(f)),
+                argument.getTabCompleters(),
                 argument.getNames(),
                 ""
         );
@@ -147,7 +152,7 @@ public interface Command<A> {
         } else if (command instanceof Parser) {
             Parser<A> parser = (Parser<A>) command;
             List<String> list = new ArrayList<>(Arrays.asList(Arrays.copyOfRange(args, index, args.length)));
-            A a = parser.getParser().apply(list.iterator()).orElse(null);
+            A a = parser.getParser().apply(list)._1.orElse(null);
             return a != null
                     ? Either.right(new CommandSuccess<>(new String[0], args.length, a))
                     : Either.left(new CommandFailure.ParsingFailure<>(parser.getNames(), parser));
@@ -159,7 +164,7 @@ public interface Command<A> {
         return tabCompleteWithIndex(0, args, command);
     }
 
-    static <A> CommandTabResult<A> tabCompleteWithIndex(int index, String[] args, Command<? extends A> command) {
+    static <A> CommandTabResult<A> tabCompleteWithIndex(int index, String[] args, Command<A> command) {
         String argument = (args.length > index ? args[index] : "").toLowerCase();
         if (command instanceof Command.Compound) {
             Compound<A> mapCommand = (Compound<A>) command;
@@ -180,6 +185,20 @@ public interface Command<A> {
             Present<A> present = (Present<A>) command;
             String[] newArgs = Arrays.copyOfRange(args, index, args.length);
             return CommandTabResult.present(newArgs, present.getValue());
+        } else if (command instanceof Parser) {
+            Parser<A> parser = (Parser<A>) command;
+            int pos = args.length - index - 1;
+            List<Supplier<List<String>>> tabCompleters = parser.getTabCompleters();
+            Supplier<List<String>> tabCompleter = tabCompleters.size() > pos && pos >= 0
+                    ? tabCompleters.get(pos)
+                    : null;
+            String lowerArgument = argument.toLowerCase();
+            List<String> tabComplete = tabCompleter != null
+                    ? tabCompleter.get().stream()
+                    .filter(s -> s.startsWith(lowerArgument))
+                    .collect(Collectors.toList())
+                    : Collections.emptyList();
+            return CommandTabResult.suggestion(tabComplete);
         }
         return CommandTabResult.suggestion(Collections.emptyList());
     }

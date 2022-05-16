@@ -12,9 +12,9 @@ import static io.typecraft.command.Argument.intArg;
 import static io.typecraft.command.Argument.strArg;
 import static io.typecraft.command.Command.pair;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 public class CommandTest {
+    private static final Argument<Integer> intTabArg = intArg.withTabCompleter(() -> Arrays.asList("10", "20"));
     // MyCommand = AddItem | RemoveItem | ...
     private static final Command<MyCommand> itemCommand =
             Command.compound(
@@ -22,7 +22,8 @@ public class CommandTest {
                     // intArg: Argument<Integer>
                     // strArg: Argument<String>
                     pair("add", Command.argument(AddItem::new, intArg, strArg)),
-                    pair("remove", Command.argument(RemoveItem::new, intArg))
+                    pair("remove", Command.argument(RemoveItem::new, intArg)),
+                    pair("page", Command.argument(PageItem::new, intTabArg))
             );
     private static final Command<MyCommand> reloadCommand =
             Command.<MyCommand>present(new ReloadCommand()).withDescription("리로드합니다.");
@@ -67,9 +68,17 @@ public class CommandTest {
     }
 
     public static class RemoveItem implements MyCommand {
+        public final Number index;
+
+        public RemoveItem(Number index) {
+            this.index = index;
+        }
+    }
+
+    public static class PageItem implements MyCommand {
         public final int index;
 
-        public RemoveItem(int index) {
+        public PageItem(int index) {
             this.index = index;
         }
     }
@@ -179,7 +188,7 @@ public class CommandTest {
     public void tabSub() {
         String[] args = new String[]{"item", ""};
         assertEquals(
-                CommandTabResult.suggestion(Arrays.asList("open", "add", "remove")),
+                CommandTabResult.suggestion(Arrays.asList("open", "add", "remove", "page")),
                 Command.tabComplete(args, rootCommand)
         );
     }
@@ -190,6 +199,18 @@ public class CommandTest {
         assertEquals(
                 CommandTabResult.suggestion(Collections.emptyList()),
                 Command.tabComplete(args, rootCommand)
+        );
+    }
+
+    @Test
+    public void tabCustom() {
+        assertEquals(
+                CommandTabResult.suggestion(Arrays.asList("10", "20")),
+                Command.tabComplete(new String[]{"item", "page", ""}, rootCommand)
+        );
+        assertEquals(
+                CommandTabResult.suggestion(Collections.singletonList("10")),
+                Command.tabComplete(new String[]{"item", "page", "1"}, rootCommand)
         );
     }
 }
