@@ -4,7 +4,7 @@ A typesafe command line parser.
 
 ```java
 // core/src/test/../CommandTest.java
-// MyCommand = AddItem | RemoveItem | ...
+// MyCommand = AddItem | RemoveItem | OpenItemList | ReloadCommand
 Command<MyCommand> command = Command.mapping(
         pair("item", Command.mapping(
                 pair("open", Command.present(new OpenItemList())),

@@ -12,7 +12,6 @@ import static io.typecraft.command.Argument.strArg;
 import static io.typecraft.command.Command.pair;
 
 public class CommandBukkitPlugin extends JavaPlugin {
-
     @Override
     public void onEnable() {
         BukkitCommand.register(
@@ -24,23 +23,7 @@ public class CommandBukkitPlugin extends JavaPlugin {
         );
     }
 
-    private static void execute(CommandSender sender, MyCommand command) {
-        if (command instanceof MyCommand.Reload) {
-            sender.sendMessage("Reloading..");
-            // Reload!
-        } else if (command instanceof MyCommand.ItemAdd) {
-            MyCommand.ItemAdd itemAdd = (MyCommand.ItemAdd) command;
-            sender.sendMessage("Add item! " + itemAdd.getName());
-        } else if (command instanceof MyCommand.ItemRemove) {
-            MyCommand.ItemRemove itemRemove = (MyCommand.ItemRemove) command;
-            sender.sendMessage("Remove item! " + itemRemove.getName());
-        } else if (command instanceof MyCommand.ItemPage) {
-            MyCommand.ItemPage itemPage = ((MyCommand.ItemPage) command);
-            sender.sendMessage("Paging item! " + itemPage.getPage());
-        }
-    }
-
-    // MyCommand = Reload | Hello
+    // MyCommand = Reload | ItemAdd | ItemRemove | ItemPage
     private interface MyCommand {
         Command<MyCommand> command = Command.mapping(
                 pair("item", Command.mapping(
@@ -69,6 +52,22 @@ public class CommandBukkitPlugin extends JavaPlugin {
         @Data
         class ItemPage implements MyCommand {
             private final Number page;
+        }
+    }
+
+    private static void execute(CommandSender sender, MyCommand command) {
+        if (command instanceof MyCommand.Reload) {
+            sender.sendMessage("Reloading..");
+            // Reload!
+        } else if (command instanceof MyCommand.ItemAdd) {
+            MyCommand.ItemAdd itemAdd = (MyCommand.ItemAdd) command;
+            sender.sendMessage("Add item! " + itemAdd.getName());
+        } else if (command instanceof MyCommand.ItemRemove) {
+            MyCommand.ItemRemove itemRemove = (MyCommand.ItemRemove) command;
+            sender.sendMessage("Remove item! " + itemRemove.getName());
+        } else if (command instanceof MyCommand.ItemPage) {
+            MyCommand.ItemPage itemPage = ((MyCommand.ItemPage) command);
+            sender.sendMessage("Paging item! " + itemPage.getPage());
         }
     }
 }
