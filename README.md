@@ -5,8 +5,8 @@ A typesafe command line parser.
 ```java
 // core/src/test/../CommandTest.java
 // MyCommand = AddItem | RemoveItem | ...
-Command<MyCommand> command = Command.map(
-        pair("item", Command.map(
+Command<MyCommand> command = Command.mapping(
+        pair("item", Command.mapping(
                 pair("open", Command.present(new OpenItemList())),
                 // intArg: Argument<Integer>
                 // strArg: Argument<String>
