@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class CommandTest {
     private static final Argument<Integer> intTabArg = intArg.withTabCompleter(() -> Arrays.asList("10", "20"));
     // MyCommand = AddItem | RemoveItem | ...
-    private static final Command<MyCommand> itemCommand =
+    private static final Command.Mapping<MyCommand> itemCommand =
             Command.mapping(
                     pair("open", Command.present(new OpenItemList()).withDescription("아이템 목록을 엽니다.")),
                     // intArg: Argument<Integer>
@@ -25,6 +25,8 @@ public class CommandTest {
                     pair("remove", Command.argument(RemoveItem::new, intArg)),
                     pair("page", Command.argument(PageItem::new, intTabArg))
             );
+    private static final Command.Mapping<MyCommand> itemCommandWithFallback =
+            itemCommand.withFallback(Command.present(new FallbackItem()));
     private static final Command<MyCommand> reloadCommand =
             Command.<MyCommand>present(new ReloadCommand()).withDescription("리로드합니다.");
     private static final Command<MyCommand> rootCommand =
@@ -87,6 +89,13 @@ public class CommandTest {
         @Override
         public boolean equals(Object obj) {
             return obj instanceof OpenItemList;
+        }
+    }
+
+    public static class FallbackItem implements MyCommand {
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof FallbackItem;
         }
     }
 
@@ -172,6 +181,19 @@ public class CommandTest {
                     : " - " + description;
             System.out.println("/" + String.join(" ", usageArgs) + suffix);
         }
+    }
+
+    @Test
+    public void mappingFallback() {
+        String[] args = new String[]{"item"};
+        Either<CommandFailure<MyCommand>, CommandSuccess<MyCommand>> result =
+                Command.parse(args, Command.mapping(
+                        pair("item", itemCommandWithFallback)
+                ));
+        assertEquals(
+                Either.right(new CommandSuccess<>(args, 2, new FallbackItem())),
+                result
+        );
     }
 
     // tab

@@ -4,6 +4,7 @@ import io.vavr.*;
 import io.vavr.control.Either;
 import lombok.Data;
 import lombok.With;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -15,12 +16,15 @@ public interface Command<A> {
     <B> Command<B> map(Function<? super A, ? extends B> f);
 
     @Data
+    @With
     class Mapping<A> implements Command<A> {
         // TODO: i18n?
         private final Map<String, Command<A>> map;
+        private final Command<A> fallback;
 
-        private Mapping(Map<String, Command<A>> map) {
+        private Mapping(Map<String, Command<A>> map, @Nullable Command<A> fallback) {
             this.map = map;
+            this.fallback = fallback;
         }
 
         @Override
@@ -29,7 +33,12 @@ public interface Command<A> {
             for (Map.Entry<String, Command<A>> pair : map.entrySet()) {
                 newMap.put(pair.getKey(), pair.getValue().map(f));
             }
-            return new Mapping<>(newMap);
+            Command<A> fallback = getFallback().orElse(null);
+            return new Mapping<>(newMap, fallback != null ? fallback.map(f) : null);
+        }
+
+        public Optional<Command<A>> getFallback() {
+            return Optional.ofNullable(fallback);
         }
     }
 
@@ -83,7 +92,7 @@ public interface Command<A> {
         for (Tuple2<String, Command<? extends A>> entry : entries) {
             map.put(entry._1(), (Command<A>) entry._2);
         }
-        return new Mapping<>(map);
+        return new Mapping<>(map, null);
     }
 
     static <A> Present<A> present(A value) {
@@ -140,12 +149,16 @@ public interface Command<A> {
         if (command instanceof Command.Mapping) {
             Mapping<A> mapCommand = (Mapping<A>) command;
             if (argument == null) {
-                return Either.left(new CommandFailure.FewArguments<>(args, index, mapCommand));
+                Command<A> fallback = mapCommand.getFallback().orElse(null);
+                return fallback != null
+                        ? parseWithIndex(index + 1, args, fallback)
+                        : Either.left(new CommandFailure.FewArguments<>(args, index, mapCommand));
+            } else {
+                Command<A> subCommand = mapCommand.getMap().get(argument);
+                return subCommand != null
+                        ? parseWithIndex(index + 1, args, subCommand)
+                        : Either.left(new CommandFailure.UnknownSubCommand<>(args, index, mapCommand));
             }
-            Command<A> subCommand = mapCommand.getMap().get(argument);
-            return subCommand != null
-                    ? parseWithIndex(index + 1, args, subCommand)
-                    : Either.left(new CommandFailure.UnknownSubCommand<>(args, index, mapCommand));
         } else if (command instanceof Present) {
             Present<A> present = (Present<A>) command;
             return Either.right(new CommandSuccess<>(args, index, present.getValue()));
