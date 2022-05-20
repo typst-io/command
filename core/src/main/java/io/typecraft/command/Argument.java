@@ -13,6 +13,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.vavr.API.Try;
+
 @SuppressWarnings("DuplicatedCode")
 @Data(staticConstructor = "of")
 @With
@@ -22,10 +24,25 @@ public class Argument<A> {
     private final List<Supplier<List<String>>> tabCompleters;
     public static final Argument<String> strArg =
             ofUnary("string", Optional::of, Collections::emptyList);
+
     public static final Argument<Integer> intArg =
             ofUnary("int", Argument::parseInt, Collections::emptyList);
+
+    public static final Argument<Long> longArg =
+            ofUnary("long", Argument::parseLong, Collections::emptyList);
+
+    public static final Argument<Float> floatArg =
+            ofUnary("float", Argument::parseFloat, Collections::emptyList);
+
     public static final Argument<Double> doubleArg =
-            ofUnary("int", Argument::parseDouble, Collections::emptyList);
+            ofUnary("double", Argument::parseDouble, Collections::emptyList);
+
+    private static final List<String> boolSuggestions =
+            Arrays.asList("true", "false");
+
+    public static final Argument<Boolean> boolArg =
+            ofUnary("bool", Argument::parseBoolean, () -> boolSuggestions);
+
     public static final Argument<List<String>> strsArg =
             of(
                     Collections.singletonList("strings"),
@@ -121,18 +138,22 @@ public class Argument<A> {
     }
 
     private static Optional<Integer> parseInt(String s) {
-        try {
-            return Optional.of(Integer.parseInt(s));
-        } catch (Exception ex) {
-            return Optional.empty();
-        }
+        return Try(() -> Integer.parseInt(s)).toJavaOptional();
+    }
+
+    private static Optional<Long> parseLong(String s) {
+        return Try(() -> Long.parseLong(s)).toJavaOptional();
+    }
+
+    private static Optional<Float> parseFloat(String s) {
+        return Try(() -> Float.parseFloat(s)).toJavaOptional();
     }
 
     private static Optional<Double> parseDouble(String s) {
-        try {
-            return Optional.of(Double.parseDouble(s));
-        } catch (Exception ex) {
-            return Optional.empty();
-        }
+        return Try(() -> Double.parseDouble(s)).toJavaOptional();
+    }
+
+    private static Optional<Boolean> parseBoolean(String s) {
+        return Try(() -> Boolean.parseBoolean(s)).toJavaOptional();
     }
 }
