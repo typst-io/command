@@ -1,6 +1,7 @@
 package io.typecraft.command.bukkit;
 
 import io.typecraft.command.Argument;
+import io.typecraft.command.bukkit.i18n.BukkitLangId;
 import lombok.experimental.UtilityClass;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;

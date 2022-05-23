@@ -1,4 +1,4 @@
-package io.typecraft.command.bukkit;
+package io.typecraft.command.bukkit.i18n;
 
 import io.typecraft.command.LangId;
 import lombok.experimental.UtilityClass;

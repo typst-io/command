@@ -2,6 +2,7 @@ package io.typecraft.command.bukkit;
 
 import io.typecraft.command.LangId;
 import io.typecraft.command.bukkit.config.BukkitCommandConfig;
+import io.typecraft.command.bukkit.i18n.BukkitLangId;
 import io.typecraft.command.config.CommandConfig;
 import io.typecraft.command.i18n.Language;
 import io.typecraft.command.i18n.PluginLanguage;
