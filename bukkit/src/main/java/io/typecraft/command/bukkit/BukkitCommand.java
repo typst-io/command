@@ -2,8 +2,12 @@ package io.typecraft.command.bukkit;
 
 import io.typecraft.command.Command;
 import io.typecraft.command.*;
+import io.typecraft.command.config.CommandConfig;
+import io.typecraft.command.i18n.Language;
 import io.vavr.control.Either;
+import lombok.experimental.UtilityClass;
 import org.bukkit.command.*;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -12,18 +16,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@UtilityClass
 public class BukkitCommand {
-    public static <A> void register(
+    public static <A> void registerWithConfig(
             String commandName,
             BiConsumer<CommandSender, A> executor,
             BiFunction<CommandSender, A, List<String>> tabCompleter,
+            Supplier<CommandConfig> getConfig,
             JavaPlugin plugin,
             Command<A> command
     ) {
-        PluginTabExecutor<A> pluginTabExecutor = new PluginTabExecutor<>(command, commandName, plugin, executor, tabCompleter);
+        PluginTabExecutor<A> pluginTabExecutor = new PluginTabExecutor<>(command, commandName, plugin, getConfig, executor, tabCompleter);
         PluginCommand pluginCmd = plugin.getCommand(commandName);
         if (pluginCmd == null) {
             throw new IllegalArgumentException(String.format("Unknown command name: '%s'", commandName));
@@ -32,14 +39,28 @@ public class BukkitCommand {
         pluginCmd.setTabCompleter(pluginTabExecutor);
     }
 
-    public static <A> Optional<CommandSuccess<A>> execute(CommandSender sender, String label, String[] args, Command<A> command) {
+    /**
+     * To use this register, your plugin should depend on `BukkitCommand` plugin. If you don't, use `BukkitCommand.registerWithConfig` instead.
+     */
+    public static <A> void register(
+            String commandName,
+            BiConsumer<CommandSender, A> executor,
+            BiFunction<CommandSender, A, List<String>> tabCompleter,
+            JavaPlugin plugin,
+            Command<A> command
+    ) {
+        registerWithConfig(commandName, executor, tabCompleter, () -> CommandBukkitPlugin.get().getCommandConfig(), plugin, command);
+    }
+
+
+    public static <A> Optional<CommandSuccess<A>> execute(Map<String, String> langs, CommandSender sender, String label, String[] args, Command<A> command) {
         Either<CommandFailure<A>, CommandSuccess<A>> result = Command.parse(args, command);
         if (result.isRight()) {
             CommandSuccess<A> success = result.get();
             return Optional.of(success);
         } else if (result.isLeft()) {
             CommandFailure<A> failure = result.getLeft();
-            for (String line : getFailureMessage(label, failure)) {
+            for (String line : getFailureMessage(langs, label, failure)) {
                 sender.sendMessage(line);
             }
         }
@@ -50,7 +71,7 @@ public class BukkitCommand {
         return Command.tabComplete(args, command);
     }
 
-    private static <A> List<String> getCommandUsages(String label, String[] args, int position, Command<A> cmd) {
+    private static <A> List<String> getCommandUsages(Map<String, String> langs, String label, String[] args, int position, Command<A> cmd) {
         String[] succArgs = args.length >= 1
                 ? Arrays.copyOfRange(args, 0, position)
                 : new String[0];
@@ -65,49 +86,56 @@ public class BukkitCommand {
                     CommandSpec spec = Command.getSpec(pair.getValue());
                     String argSuffix = spec.getArguments().isEmpty()
                             ? ""
-                            : " §e" + spec.getArguments().stream().map(s -> String.format("(%s)", s)).collect(Collectors.joining(" "));
-                    String descSuffix = spec.getDescription().isEmpty()
+                            : " §e" + spec.getArguments().stream().map(s -> String.format("(%s)", s.getMessage(langs))).collect(Collectors.joining(" "));
+                    String description = spec.getDescriptionId().getMessage(langs);
+                    String descSuffix = description.isEmpty()
                             ? ""
-                            : " §f- " + spec.getDescription();
+                            : " §f- " + description;
                     return String.format("§a/%s %s", label, String.join(" ", usageArgs)) + argSuffix + descSuffix;
                 })
                 .collect(Collectors.toList());
     }
 
-    private static <A> List<String> getFailureMessage(String label, CommandFailure<A> failure) {
+    private static <A> List<String> getFailureMessage(Map<String, String> langs, String label, CommandFailure<A> failure) {
         if (failure instanceof CommandFailure.FewArguments) {
             CommandFailure.FewArguments<A> fewArgs = (CommandFailure.FewArguments<A>) failure;
-            return getCommandUsages(label, fewArgs.getArguments(), fewArgs.getIndex(), fewArgs.getCommand());
+            return getCommandUsages(langs, label, fewArgs.getArguments(), fewArgs.getIndex(), fewArgs.getCommand());
         } else if (failure instanceof CommandFailure.UnknownSubCommand) {
             CommandFailure.UnknownSubCommand<A> unknown = (CommandFailure.UnknownSubCommand<A>) failure;
             String input = unknown.getArguments()[unknown.getIndex()];
             List<String> usages = new ArrayList<>(getCommandUsages(
-                    label, unknown.getArguments(), unknown.getIndex(), unknown.getCommand()
+                    langs, label, unknown.getArguments(), unknown.getIndex(), unknown.getCommand()
             ));
-            usages.add(String.format("'%s' 명령어는 존재하지 않습니다!", input));
+            usages.add(String.format(LangId.commandNotExists.getMessage(langs), input));
             return usages;
         }
-        return Collections.singletonList("잘못된 명령어입니다!");
+        return Collections.singletonList(LangId.commandWrongUsage.getMessage(langs));
     }
 
     private static class PluginTabExecutor<A> implements CommandExecutor, TabCompleter, PluginIdentifiableCommand {
         private final Command<A> command;
         private final String commandName;
         private final Plugin plugin;
+        private final Supplier<CommandConfig> getConfig;
         private final BiConsumer<CommandSender, A> executor;
         private final BiFunction<CommandSender, A, List<String>> tabCompleter;
 
-        public PluginTabExecutor(Command<A> command, String commandName, Plugin plugin, BiConsumer<CommandSender, A> executor, BiFunction<CommandSender, A, List<String>> tabCompleter) {
+        public PluginTabExecutor(Command<A> command, String commandName, Plugin plugin, Supplier<CommandConfig> getConfig, BiConsumer<CommandSender, A> executor, BiFunction<CommandSender, A, List<String>> tabCompleter) {
             this.command = command;
             this.commandName = commandName;
             this.plugin = plugin;
+            this.getConfig = getConfig;
             this.executor = executor;
             this.tabCompleter = tabCompleter;
         }
 
         @Override
         public boolean onCommand(@NotNull CommandSender sender, @NotNull org.bukkit.command.Command cmd, @NotNull String label, @NotNull String[] args) {
-            execute(sender, label, args, command)
+            CommandConfig config = getConfig.get();
+            Player player = sender instanceof Player ? ((Player) sender) : null;
+            Locale locale = player != null ? Language.parseLocaleFrom(player.getLocale()).orElse(null) : config.getDefaultLocale();
+            Map<String, String> langs = config.getPluginMessagesWithBase(locale, plugin.getName());
+            execute(langs, sender, label, args, command)
                     .ifPresent(succ -> executor.accept(sender, succ.getCommand()));
             return true;
         }

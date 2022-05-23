@@ -1,73 +1,164 @@
 package io.typecraft.command.bukkit;
 
-import io.typecraft.command.Command;
-import lombok.Data;
-import org.bukkit.command.CommandSender;
+import io.typecraft.command.LangId;
+import io.typecraft.command.bukkit.config.BukkitCommandConfig;
+import io.typecraft.command.config.CommandConfig;
+import io.typecraft.command.i18n.Language;
+import io.typecraft.command.i18n.PluginLanguage;
+import io.vavr.Tuple2;
+import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Collections;
-
-import static io.typecraft.command.Argument.intArg;
-import static io.typecraft.command.Argument.strArg;
-import static io.typecraft.command.Command.pair;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CommandBukkitPlugin extends JavaPlugin {
+    private Map<String, Set<LangId>> extraPluginLangIds = Collections.emptyMap();
+    private CommandConfig commandConfig = CommandConfig.of(Locale.getDefault(), BukkitLangId.defaultLangs, Collections.emptyMap());
+
+    @Override
+    public void onLoad() {
+        addPluginLangIds(MyCommand.allLangs, this);
+    }
+
     @Override
     public void onEnable() {
+        commandConfig = loadCommandConfig();
         BukkitCommand.register(
                 "bukkitcommand",
-                CommandBukkitPlugin::execute,
+                MyCommand::execute,
                 (sender, cmd) -> Collections.emptyList(),
                 this,
-                MyCommand.command
+                MyCommand.node
         );
     }
 
-    // MyCommand = Reload | ItemAdd | ItemRemove | ItemPage
-    private interface MyCommand {
-        Command<MyCommand> command = Command.mapping(
-                pair("item", Command.mapping(
-                        pair("add", Command.argument(ItemAdd::new, strArg.withName("이름"))
-                                .withDescription("아이템을 추가합니다.")),
-                        pair("remove", Command.argument(ItemRemove::new, strArg.withName("이름"))
-                                .withDescription("아이템을 제거합니다.")),
-                        pair("page", Command.argument(ItemPage::new, intArg.withName("페이지")))
-                )),
-                pair("reload", Command.present(new MyCommand.Reload()).withDescription("리로드합니다."))
-        );
-
-        class Reload implements MyCommand {
-        }
-
-        @Data
-        class ItemAdd implements MyCommand {
-            private final String name;
-        }
-
-        @Data
-        class ItemRemove implements MyCommand {
-            private final String name;
-        }
-
-        @Data
-        class ItemPage implements MyCommand {
-            private final Number page;
-        }
+    public CommandConfig getCommandConfig() {
+        return commandConfig;
     }
 
-    private static void execute(CommandSender sender, MyCommand command) {
-        if (command instanceof MyCommand.Reload) {
-            sender.sendMessage("Reloading..");
-            // Reload!
-        } else if (command instanceof MyCommand.ItemAdd) {
-            MyCommand.ItemAdd itemAdd = (MyCommand.ItemAdd) command;
-            sender.sendMessage("Add item! " + itemAdd.getName());
-        } else if (command instanceof MyCommand.ItemRemove) {
-            MyCommand.ItemRemove itemRemove = (MyCommand.ItemRemove) command;
-            sender.sendMessage("Remove item! " + itemRemove.getName());
-        } else if (command instanceof MyCommand.ItemPage) {
-            MyCommand.ItemPage itemPage = ((MyCommand.ItemPage) command);
-            sender.sendMessage("Paging item! " + itemPage.getPage());
+    void setCommandConfig(CommandConfig commandConfig) {
+        this.commandConfig = commandConfig;
+    }
+
+    public void addPluginLangIds(Set<LangId> ids, Plugin plugin) {
+        Map<String, Set<LangId>> newPluginLangIds = new LinkedHashMap<>(extraPluginLangIds);
+        Set<LangId> langIds = new HashSet<>(newPluginLangIds.getOrDefault(plugin.getName(), Collections.emptySet()));
+        langIds.addAll(ids);
+        newPluginLangIds.put(plugin.getName(), langIds);
+        this.extraPluginLangIds = newPluginLangIds;
+    }
+
+    private Map<String, Map<Locale, Map<String, String>>> getDefaultPluginLangs() {
+        Map<String, Map<Locale, Map<String, String>>> pluginLangs = new HashMap<>();
+        for (Map.Entry<String, Set<LangId>> pair : extraPluginLangIds.entrySet()) {
+            String pluginName = pair.getKey();
+            Set<LangId> ids = pair.getValue();
+            Map<Locale, Map<String, String>> langs = pluginLangs.computeIfAbsent(pluginName, k -> new HashMap<>());
+            Map<String, String> messages = ids.stream()
+                    .map(id -> new Tuple2<>(id.getId(), id.getMessage()))
+                    .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
+            langs.put(Locale.KOREAN, messages);
+            langs.put(Locale.ENGLISH, messages);
         }
+        return pluginLangs;
+    }
+
+    CommandConfig loadCommandConfig() {
+        // load
+        CommandConfig config = BukkitCommandConfig.load(
+                getConfigFile(),
+                getBaseLangFiles(),
+                getPluginLangFiles()
+        );
+        // create default config file if not exists
+        if (!getConfigFile().isFile()) {
+            YamlConfiguration configYaml = new YamlConfiguration();
+            configYaml.set("default-locale", Locale.getDefault().toString());
+            try {
+                configYaml.save(getConfigFile());
+            } catch (IOException e) {
+                getLogger().log(Level.WARNING, e, () -> "Error while create default config.yml");
+            }
+        }
+        // create default base lang files if not exists
+        for (Map.Entry<Locale, Map<String, String>> pair : BukkitLangId.defaultLangs.entrySet()) {
+            Locale locale = pair.getKey();
+            Map<String, String> defaultMessages = pair.getValue();
+            if (!config.getBaseLangs().containsKey(locale)) {
+                YamlConfiguration baseLangYaml = new YamlConfiguration();
+                new Language(locale, defaultMessages)
+                        .toMap()
+                        .forEach(baseLangYaml::set);
+                File file = new File(getLangFolder(), locale + ".yml");
+                try {
+                    baseLangYaml.save(file);
+                } catch (IOException e) {
+                    getLogger().log(Level.INFO, "Error while creating default base lang: " + file.getAbsolutePath());
+                }
+            }
+        }
+        // create default plugin lang files if not exists
+        for (Map.Entry<String, Map<Locale, Map<String, String>>> pluginPair : getDefaultPluginLangs().entrySet()) {
+            String pluginName = pluginPair.getKey();
+            for (Map.Entry<Locale, Map<String, String>> pair : pluginPair.getValue().entrySet()) {
+                Locale locale = pair.getKey();
+                Map<String, String> defaultMessages = pair.getValue();
+                Map<Locale, Map<String, String>> pluginLangs = config.getPluginLangs().getOrDefault(pluginName, Collections.emptyMap());
+                if (!pluginLangs.containsKey(locale)) {
+                    YamlConfiguration pluginLangYaml = new YamlConfiguration();
+                    new PluginLanguage(pluginName, locale, defaultMessages)
+                            .toMap()
+                            .forEach(pluginLangYaml::set);
+                    File file = new File(getLangFolder(), pluginName + "/" + locale + ".yml");
+                    try {
+                        pluginLangYaml.save(file);
+                    } catch (IOException e) {
+                        getLogger().log(Level.INFO, "Error while creating default plugin lang: " + file.getAbsolutePath());
+                    }
+                }
+            }
+        }
+        return config;
+    }
+
+    // plugins/BukkitCommand/config.yml
+    private File getConfigFile() {
+        return new File(getDataFolder(), "config.yml");
+    }
+
+    // plugins/BukkitCommand/langs
+    private File getLangFolder() {
+        return new File(getDataFolder(), "langs");
+    }
+
+    // plugins/BukkitCommand/langs/*.yml
+    private List<File> getBaseLangFiles() {
+        return getFolderFiles(getLangFolder())
+                .filter(file -> file.isFile() && file.getName().endsWith(".yml"))
+                .collect(Collectors.toList());
+    }
+
+    // plugins/BukkitCommand/langs/**/*.yml
+    private List<File> getPluginLangFiles() {
+        return getFolderFiles(getLangFolder())
+                .flatMap(CommandBukkitPlugin::getFolderFiles)
+                .filter(file -> file.isFile() && file.getName().endsWith(".yml"))
+                .collect(Collectors.toList());
+    }
+
+    public static CommandBukkitPlugin get() {
+        return (CommandBukkitPlugin) Bukkit.getPluginManager().getPlugin("BukkitCommand");
+    }
+
+    private static Stream<File> getFolderFiles(File folder) {
+        File[] files = folder.listFiles();
+        return files != null ? Arrays.stream(files) : Stream.empty();
     }
 }

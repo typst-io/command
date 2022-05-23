@@ -18,7 +18,6 @@ public interface Command<A> {
     @Data
     @With
     class Mapping<A> implements Command<A> {
-        // TODO: i18n?
         private final Map<String, Command<A>> map;
         private final Command<A> fallback;
 
@@ -28,7 +27,7 @@ public interface Command<A> {
         }
 
         @Override
-        public <B> Command<B> map(Function<? super A, ? extends B> f) {
+        public <B> Mapping<B> map(Function<? super A, ? extends B> f) {
             Map<String, Command<B>> newMap = new HashMap<>(this.map.size());
             for (Map.Entry<String, Command<A>> pair : map.entrySet()) {
                 newMap.put(pair.getKey(), pair.getValue().map(f));
@@ -46,16 +45,20 @@ public interface Command<A> {
     @With
     class Present<A> implements Command<A> {
         private final A value;
-        private final String description;
+        private final LangId descriptionId;
 
-        private Present(A value, String description) {
+        private Present(A value, LangId descriptionId) {
             this.value = value;
-            this.description = description;
+            this.descriptionId = descriptionId;
+        }
+
+        public Present<A> withDescription(String description) {
+            return withDescriptionId(LangId.of("").withMessage(description));
         }
 
         @Override
-        public <B> Command<B> map(Function<? super A, ? extends B> f) {
-            return new Present<>(f.apply(value), getDescription());
+        public <B> Present<B> map(Function<? super A, ? extends B> f) {
+            return new Present<>(f.apply(value), getDescriptionId());
         }
     }
 
@@ -64,24 +67,28 @@ public interface Command<A> {
     class Parser<A> implements Command<A> {
         private final Function<List<String>, Tuple2<Optional<A>, List<String>>> parser;
         private final List<Supplier<List<String>>> tabCompleters;
-        private final List<String> names;
-        private final String description;
+        private final List<LangId> names;
+        private final LangId descriptionId;
 
-        private Parser(Function<List<String>, Tuple2<Optional<A>, List<String>>> parser, List<Supplier<List<String>>> tabCompleters, List<String> names, String description) {
+        private Parser(Function<List<String>, Tuple2<Optional<A>, List<String>>> parser, List<Supplier<List<String>>> tabCompleters, List<LangId> names, LangId descriptionId) {
             this.parser = parser;
             this.tabCompleters = tabCompleters;
             this.names = names;
-            this.description = description;
+            this.descriptionId = descriptionId;
         }
 
         @Override
-        public <B> Command<B> map(Function<? super A, ? extends B> f) {
+        public <B> Parser<B> map(Function<? super A, ? extends B> f) {
             return new Parser<>(
                     args -> parser.apply(args).map1(aO -> aO.map(f)),
                     tabCompleters,
                     getNames(),
-                    getDescription()
+                    getDescriptionId()
             );
+        }
+
+        public Parser<A> withDescription(String description) {
+            return withDescriptionId(LangId.of("").withMessage(description));
         }
     }
 
@@ -96,15 +103,15 @@ public interface Command<A> {
     }
 
     static <A> Present<A> present(A value) {
-        return new Present<>(value, "");
+        return new Present<>(value, LangId.of(""));
     }
 
     static <T, A> Parser<T> argument(Function<? super A, ? extends T> f, Argument<A> argument) {
         return new Parser<>(
                 args -> argument.getParser().apply(args).map1(aO -> aO.map(f)),
                 argument.getTabCompleters(),
-                argument.getNames(),
-                ""
+                argument.getIds(),
+                LangId.of("")
         );
     }
 
@@ -243,13 +250,13 @@ public interface Command<A> {
             Present<A> present = (Present<A>) cmd;
             return CommandSpec.of(
                     Collections.emptyList(),
-                    present.getDescription()
+                    present.getDescriptionId()
             );
         } else if (cmd instanceof Command.Parser) {
             Parser<A> parser = (Parser<A>) cmd;
             return CommandSpec.of(
                     parser.getNames(),
-                    parser.getDescription()
+                    parser.getDescriptionId()
             );
         }
         return CommandSpec.empty;

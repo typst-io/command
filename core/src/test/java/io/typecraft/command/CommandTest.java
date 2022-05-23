@@ -175,7 +175,7 @@ public class CommandTest {
                             Stream.of(s)
                     ))
                     .collect(Collectors.toList());
-            String description = Command.getSpec(pair.getValue()).getDescription();
+            String description = Command.getSpec(pair.getValue()).getDescriptionId().getMessage();
             String suffix = description.isEmpty()
                     ? ""
                     : " - " + description;

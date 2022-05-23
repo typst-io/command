@@ -13,55 +13,53 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.vavr.API.Try;
-
 @SuppressWarnings("DuplicatedCode")
 @Data(staticConstructor = "of")
 @With
 public class Argument<A> {
-    private final List<String> names;
+    private final List<LangId> ids;
     private final Function<List<String>, Tuple2<Optional<A>, List<String>>> parser;
     private final List<Supplier<List<String>>> tabCompleters;
     public static final Argument<String> strArg =
-            ofUnary("string", Optional::of, Collections::emptyList);
+            ofUnary(LangId.typeString, Optional::of, Collections::emptyList);
 
     public static final Argument<Integer> intArg =
-            ofUnary("int", Argument::parseInt, Collections::emptyList);
+            ofUnary(LangId.typeInt, Converters::parseInt, Collections::emptyList);
 
     public static final Argument<Long> longArg =
-            ofUnary("long", Argument::parseLong, Collections::emptyList);
+            ofUnary(LangId.typeLong, Converters::parseLong, Collections::emptyList);
 
     public static final Argument<Float> floatArg =
-            ofUnary("float", Argument::parseFloat, Collections::emptyList);
+            ofUnary(LangId.typeFloat, Converters::parseFloat, Collections::emptyList);
 
     public static final Argument<Double> doubleArg =
-            ofUnary("double", Argument::parseDouble, Collections::emptyList);
+            ofUnary(LangId.typeDouble, Converters::parseDouble, Collections::emptyList);
 
     private static final List<String> boolSuggestions =
             Arrays.asList("true", "false");
 
     public static final Argument<Boolean> boolArg =
-            ofUnary("bool", Argument::parseBoolean, () -> boolSuggestions);
+            ofUnary(LangId.typeBool, Converters::parseBoolean, () -> boolSuggestions);
 
     public static final Argument<List<String>> strsArg =
             of(
-                    Collections.singletonList("strings"),
+                    Collections.singletonList(LangId.typeStrings),
                     args -> new Tuple2<>(Optional.of(args), Collections.emptyList()),
                     Collections.emptyList()
             );
 
     public static <A> Argument<A> ofUnary(
-            String name,
+            LangId id,
             Function<String, Optional<A>> parser,
             Supplier<List<String>> tabCompleter
     ) {
         return of(
-                Collections.singletonList(name),
+                Collections.singletonList(id),
                 args -> {
                     List<String> newArgs = new ArrayList<>(args);
                     String arg = newArgs.size() >= 1 ? newArgs.remove(0) : "";
                     return new Tuple2<>(
-                            arg.length() >= 1 ? parser.apply(arg) : Optional.<A>empty(),
+                            arg.length() >= 1 ? parser.apply(arg) : Optional.empty(),
                             newArgs
                     );
                 },
@@ -69,8 +67,22 @@ public class Argument<A> {
         );
     }
 
-    public Argument<A> withName(String name) {
-        return withNames(Collections.singletonList(name));
+    public Argument<A> withMessage(String name) {
+        List<LangId> ids = getIds();
+        LangId id = ids.size() >= 1 ? ids.get(0) : null;
+        return withIds(id != null
+                ? Collections.singletonList(id.withMessage(name))
+                : Collections.emptyList());
+    }
+
+    public Argument<A> withId(LangId id) {
+        return withIds(Collections.singletonList(id));
+    }
+
+    public String getId() {
+        List<LangId> names = getIds();
+        LangId langId = names.size() >= 1 ? names.get(0) : null;
+        return langId != null ? langId.getId() : "";
     }
 
     public Argument<A> withTabCompleter(Supplier<List<String>> tabCompleter) {
@@ -79,7 +91,7 @@ public class Argument<A> {
 
     public static <A, B> Argument<Tuple2<A, B>> product(Argument<A> xa, Argument<B> xb) {
         return of(
-                flatten(Stream.of(xa.getNames(), xb.getNames())),
+                flatten(Stream.of(xa.getIds(), xb.getIds())),
                 args -> {
                     Tuple2<Optional<A>, List<String>> aPair = xa.getParser().apply(args);
                     Tuple2<Optional<B>, List<String>> bPair = xb.getParser().apply(aPair._2);
@@ -91,7 +103,7 @@ public class Argument<A> {
 
     public static <A, B, C> Argument<Tuple3<A, B, C>> product(Argument<A> xa, Argument<B> xb, Argument<C> xc) {
         return new Argument<>(
-                flatten(Stream.of(xa.getNames(), xb.getNames(), xc.getNames())),
+                flatten(Stream.of(xa.getIds(), xb.getIds(), xc.getIds())),
                 args -> {
                     Tuple2<Optional<A>, List<String>> aPair = xa.getParser().apply(args);
                     Tuple2<Optional<B>, List<String>> bPair = xb.getParser().apply(aPair._2);
@@ -104,7 +116,7 @@ public class Argument<A> {
 
     public static <A, B, C, D> Argument<Tuple4<A, B, C, D>> product(Argument<A> xa, Argument<B> xb, Argument<C> xc, Argument<D> xd) {
         return new Argument<>(
-                flatten(Stream.of(xa.getNames(), xb.getNames(), xc.getNames())),
+                flatten(Stream.of(xa.getIds(), xb.getIds(), xc.getIds())),
                 args -> {
                     Tuple2<Optional<A>, List<String>> aPair = xa.getParser().apply(args);
                     Tuple2<Optional<B>, List<String>> bPair = xb.getParser().apply(aPair._2);
@@ -118,7 +130,7 @@ public class Argument<A> {
 
     public static <A, B, C, D, E> Argument<Tuple5<A, B, C, D, E>> product(Argument<A> xa, Argument<B> xb, Argument<C> xc, Argument<D> xd, Argument<E> xe) {
         return new Argument<>(
-                flatten(Stream.of(xa.getNames(), xb.getNames(), xc.getNames())),
+                flatten(Stream.of(xa.getIds(), xb.getIds(), xc.getIds())),
                 args -> {
                     Tuple2<Optional<A>, List<String>> aPair = xa.getParser().apply(args);
                     Tuple2<Optional<B>, List<String>> bPair = xb.getParser().apply(aPair._2);
@@ -135,25 +147,5 @@ public class Argument<A> {
         return xs
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
-    }
-
-    private static Optional<Integer> parseInt(String s) {
-        return Try(() -> Integer.parseInt(s)).toJavaOptional();
-    }
-
-    private static Optional<Long> parseLong(String s) {
-        return Try(() -> Long.parseLong(s)).toJavaOptional();
-    }
-
-    private static Optional<Float> parseFloat(String s) {
-        return Try(() -> Float.parseFloat(s)).toJavaOptional();
-    }
-
-    private static Optional<Double> parseDouble(String s) {
-        return Try(() -> Double.parseDouble(s)).toJavaOptional();
-    }
-
-    private static Optional<Boolean> parseBoolean(String s) {
-        return Try(() -> Boolean.parseBoolean(s)).toJavaOptional();
     }
 }

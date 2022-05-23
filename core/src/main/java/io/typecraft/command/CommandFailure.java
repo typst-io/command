@@ -21,7 +21,7 @@ public interface CommandFailure<A> {
 
     @Data
     class ParsingFailure<A> implements CommandFailure<A> {
-        private final List<String> names;
+        private final List<LangId> names;
         private final Command<A> command;
     }
 }
