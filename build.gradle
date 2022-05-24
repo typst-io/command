@@ -4,7 +4,7 @@ plugins {
 
 allprojects {
     group 'io.typecraft'
-    version '0.1.0-SNAPSHOT'
+    version '0.1.0'
     def moduleName = name.substring(name.indexOf('-') + 1)
     ext.registerPublish = {
         publishing {
