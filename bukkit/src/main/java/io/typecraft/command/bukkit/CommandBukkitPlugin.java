@@ -1,6 +1,6 @@
 package io.typecraft.command.bukkit;
 
-import io.typecraft.command.LangId;
+import io.typecraft.command.i18n.MessageId;
 import io.typecraft.command.bukkit.config.BukkitCommandConfig;
 import io.typecraft.command.bukkit.i18n.BukkitLangId;
 import io.typecraft.command.config.CommandConfig;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CommandBukkitPlugin extends JavaPlugin {
-    private Map<String, Set<LangId>> extraPluginLangIds = Collections.emptyMap();
+    private Map<String, Set<MessageId>> extraPluginLangIds = Collections.emptyMap();
     private CommandConfig commandConfig = CommandConfig.of(Locale.getDefault(), BukkitLangId.defaultLangs, Collections.emptyMap());
 
     @Override
@@ -48,19 +48,19 @@ public class CommandBukkitPlugin extends JavaPlugin {
         this.commandConfig = commandConfig;
     }
 
-    public void addPluginLangIds(Set<LangId> ids, Plugin plugin) {
-        Map<String, Set<LangId>> newPluginLangIds = new LinkedHashMap<>(extraPluginLangIds);
-        Set<LangId> langIds = new HashSet<>(newPluginLangIds.getOrDefault(plugin.getName(), Collections.emptySet()));
-        langIds.addAll(ids);
-        newPluginLangIds.put(plugin.getName(), langIds);
+    public void addPluginLangIds(Set<MessageId> ids, Plugin plugin) {
+        Map<String, Set<MessageId>> newPluginLangIds = new LinkedHashMap<>(extraPluginLangIds);
+        Set<MessageId> messageIds = new HashSet<>(newPluginLangIds.getOrDefault(plugin.getName(), Collections.emptySet()));
+        messageIds.addAll(ids);
+        newPluginLangIds.put(plugin.getName(), messageIds);
         this.extraPluginLangIds = newPluginLangIds;
     }
 
     private Map<String, Map<Locale, Map<String, String>>> getDefaultPluginLangs() {
         Map<String, Map<Locale, Map<String, String>>> pluginLangs = new HashMap<>();
-        for (Map.Entry<String, Set<LangId>> pair : extraPluginLangIds.entrySet()) {
+        for (Map.Entry<String, Set<MessageId>> pair : extraPluginLangIds.entrySet()) {
             String pluginName = pair.getKey();
-            Set<LangId> ids = pair.getValue();
+            Set<MessageId> ids = pair.getValue();
             Map<Locale, Map<String, String>> langs = pluginLangs.computeIfAbsent(pluginName, k -> new HashMap<>());
             Map<String, String> messages = ids.stream()
                     .map(id -> new Tuple2<>(id.getId(), id.getMessage()))

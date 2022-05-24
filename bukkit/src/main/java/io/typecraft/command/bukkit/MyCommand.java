@@ -1,7 +1,7 @@
 package io.typecraft.command.bukkit;
 
 import io.typecraft.command.Command;
-import io.typecraft.command.LangId;
+import io.typecraft.command.i18n.MessageId;
 import io.typecraft.command.config.CommandConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -14,8 +14,8 @@ import static io.typecraft.command.Command.pair;
 
 // MyCommand = Reload | ItemAdd | ItemRemove | ItemPage
 public interface MyCommand {
-    LangId langReload = LangId.of("reload").withMessage("리로드합니다.");
-    Set<LangId> allLangs = new HashSet<>(Collections.singletonList(
+    MessageId langReload = MessageId.of("reload").withMessage("리로드합니다.");
+    Set<MessageId> allLangs = new HashSet<>(Collections.singletonList(
             langReload
     ));
     Command<MyCommand> node = Command.mapping(

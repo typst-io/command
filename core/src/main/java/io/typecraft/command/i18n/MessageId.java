@@ -1,4 +1,4 @@
-package io.typecraft.command;
+package io.typecraft.command.i18n;
 
 import lombok.Data;
 import lombok.With;
@@ -7,27 +7,27 @@ import java.util.*;
 
 @With
 @Data
-public class LangId {
+public class MessageId {
     private final String id;
     private final String message;
-    public static final LangId commandNotExists = LangId.of("command-not-exists");
-    public static final LangId commandWrongUsage = LangId.of("command-wrong-usage");
-    public static final LangId typeString = LangId.of("string");
-    public static final LangId typeInt = LangId.of("int");
-    public static final LangId typeLong = LangId.of("long");
-    public static final LangId typeFloat = LangId.of("float");
-    public static final LangId typeDouble = LangId.of("double");
-    public static final LangId typeBool = LangId.of("bool");
-    public static final LangId typeStrings = LangId.of("strings");
+    public static final MessageId commandNotExists = MessageId.of("command-not-exists");
+    public static final MessageId commandWrongUsage = MessageId.of("command-wrong-usage");
+    public static final MessageId typeString = MessageId.of("string");
+    public static final MessageId typeInt = MessageId.of("int");
+    public static final MessageId typeLong = MessageId.of("long");
+    public static final MessageId typeFloat = MessageId.of("float");
+    public static final MessageId typeDouble = MessageId.of("double");
+    public static final MessageId typeBool = MessageId.of("bool");
+    public static final MessageId typeStrings = MessageId.of("strings");
     public static final Map<Locale, Map<String, String>> defaultLangs = getDefaultLangs();
 
-    private LangId(String id, String message) {
+    private MessageId(String id, String message) {
         this.id = id;
         this.message = message;
     }
 
-    public static LangId of(String id) {
-        return new LangId(id, "");
+    public static MessageId of(String id) {
+        return new MessageId(id, "");
     }
 
     public String getMessage(Map<String, String> messages) {

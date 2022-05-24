@@ -1,6 +1,6 @@
 package io.typecraft.command.bukkit.i18n;
 
-import io.typecraft.command.LangId;
+import io.typecraft.command.i18n.MessageId;
 import lombok.experimental.UtilityClass;
 
 import java.util.*;
@@ -8,12 +8,12 @@ import java.util.*;
 @UtilityClass
 public class BukkitLangId {
 
-    public static final LangId typeBukkitPlayer = LangId.of("player");
-    public static final LangId typeBukkitOfflinePlayer = LangId.of("offline-player");
+    public static final MessageId typeBukkitPlayer = MessageId.of("player");
+    public static final MessageId typeBukkitOfflinePlayer = MessageId.of("offline-player");
     public static final Map<Locale, Map<String, String>> defaultLangs = getDefaultLangs();
 
     private static Map<Locale, Map<String, String>> getDefaultLangs() {
-        Map<Locale, Map<String, String>> map = new HashMap<>(LangId.defaultLangs);
+        Map<Locale, Map<String, String>> map = new HashMap<>(MessageId.defaultLangs);
         Map<String, String> englishes = new LinkedHashMap<>(map.getOrDefault(Locale.ENGLISH, Collections.emptyMap()));
         englishes.putAll(getEnglishMessages());
         map.put(Locale.ENGLISH, englishes);

@@ -1,5 +1,6 @@
 package io.typecraft.command;
 
+import io.typecraft.command.i18n.MessageId;
 import io.vavr.*;
 import io.vavr.control.Either;
 import lombok.Data;
@@ -45,15 +46,15 @@ public interface Command<A> {
     @With
     class Present<A> implements Command<A> {
         private final A value;
-        private final LangId descriptionId;
+        private final MessageId descriptionId;
 
-        private Present(A value, LangId descriptionId) {
+        private Present(A value, MessageId descriptionId) {
             this.value = value;
             this.descriptionId = descriptionId;
         }
 
         public Present<A> withDescription(String description) {
-            return withDescriptionId(LangId.of("").withMessage(description));
+            return withDescriptionId(MessageId.of("").withMessage(description));
         }
 
         @Override
@@ -67,10 +68,10 @@ public interface Command<A> {
     class Parser<A> implements Command<A> {
         private final Function<List<String>, Tuple2<Optional<A>, List<String>>> parser;
         private final List<Supplier<List<String>>> tabCompleters;
-        private final List<LangId> names;
-        private final LangId descriptionId;
+        private final List<MessageId> names;
+        private final MessageId descriptionId;
 
-        private Parser(Function<List<String>, Tuple2<Optional<A>, List<String>>> parser, List<Supplier<List<String>>> tabCompleters, List<LangId> names, LangId descriptionId) {
+        private Parser(Function<List<String>, Tuple2<Optional<A>, List<String>>> parser, List<Supplier<List<String>>> tabCompleters, List<MessageId> names, MessageId descriptionId) {
             this.parser = parser;
             this.tabCompleters = tabCompleters;
             this.names = names;
@@ -88,7 +89,7 @@ public interface Command<A> {
         }
 
         public Parser<A> withDescription(String description) {
-            return withDescriptionId(LangId.of("").withMessage(description));
+            return withDescriptionId(MessageId.of("").withMessage(description));
         }
     }
 
@@ -103,7 +104,7 @@ public interface Command<A> {
     }
 
     static <A> Present<A> present(A value) {
-        return new Present<>(value, LangId.of(""));
+        return new Present<>(value, MessageId.of(""));
     }
 
     static <T, A> Parser<T> argument(Function<? super A, ? extends T> f, Argument<A> argument) {
@@ -111,7 +112,7 @@ public interface Command<A> {
                 args -> argument.getParser().apply(args).map1(aO -> aO.map(f)),
                 argument.getTabCompleters(),
                 argument.getIds(),
-                LangId.of("")
+                MessageId.of("")
         );
     }
 

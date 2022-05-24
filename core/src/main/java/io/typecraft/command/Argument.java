@@ -1,5 +1,6 @@
 package io.typecraft.command;
 
+import io.typecraft.command.i18n.MessageId;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import io.vavr.Tuple4;
@@ -17,39 +18,39 @@ import java.util.stream.Stream;
 @Data(staticConstructor = "of")
 @With
 public class Argument<A> {
-    private final List<LangId> ids;
+    private final List<MessageId> ids;
     private final Function<List<String>, Tuple2<Optional<A>, List<String>>> parser;
     private final List<Supplier<List<String>>> tabCompleters;
     public static final Argument<String> strArg =
-            ofUnary(LangId.typeString, Optional::of, Collections::emptyList);
+            ofUnary(MessageId.typeString, Optional::of, Collections::emptyList);
 
     public static final Argument<Integer> intArg =
-            ofUnary(LangId.typeInt, Converters::parseInt, Collections::emptyList);
+            ofUnary(MessageId.typeInt, Converters::parseInt, Collections::emptyList);
 
     public static final Argument<Long> longArg =
-            ofUnary(LangId.typeLong, Converters::parseLong, Collections::emptyList);
+            ofUnary(MessageId.typeLong, Converters::parseLong, Collections::emptyList);
 
     public static final Argument<Float> floatArg =
-            ofUnary(LangId.typeFloat, Converters::parseFloat, Collections::emptyList);
+            ofUnary(MessageId.typeFloat, Converters::parseFloat, Collections::emptyList);
 
     public static final Argument<Double> doubleArg =
-            ofUnary(LangId.typeDouble, Converters::parseDouble, Collections::emptyList);
+            ofUnary(MessageId.typeDouble, Converters::parseDouble, Collections::emptyList);
 
     private static final List<String> boolSuggestions =
             Arrays.asList("true", "false");
 
     public static final Argument<Boolean> boolArg =
-            ofUnary(LangId.typeBool, Converters::parseBoolean, () -> boolSuggestions);
+            ofUnary(MessageId.typeBool, Converters::parseBoolean, () -> boolSuggestions);
 
     public static final Argument<List<String>> strsArg =
             of(
-                    Collections.singletonList(LangId.typeStrings),
+                    Collections.singletonList(MessageId.typeStrings),
                     args -> new Tuple2<>(Optional.of(args), Collections.emptyList()),
                     Collections.emptyList()
             );
 
     public static <A> Argument<A> ofUnary(
-            LangId id,
+            MessageId id,
             Function<String, Optional<A>> parser,
             Supplier<List<String>> tabCompleter
     ) {
@@ -68,21 +69,21 @@ public class Argument<A> {
     }
 
     public Argument<A> withMessage(String name) {
-        List<LangId> ids = getIds();
-        LangId id = ids.size() >= 1 ? ids.get(0) : null;
+        List<MessageId> ids = getIds();
+        MessageId id = ids.size() >= 1 ? ids.get(0) : null;
         return withIds(id != null
                 ? Collections.singletonList(id.withMessage(name))
                 : Collections.emptyList());
     }
 
-    public Argument<A> withId(LangId id) {
+    public Argument<A> withId(MessageId id) {
         return withIds(Collections.singletonList(id));
     }
 
     public String getId() {
-        List<LangId> names = getIds();
-        LangId langId = names.size() >= 1 ? names.get(0) : null;
-        return langId != null ? langId.getId() : "";
+        List<MessageId> names = getIds();
+        MessageId messageId = names.size() >= 1 ? names.get(0) : null;
+        return messageId != null ? messageId.getId() : "";
     }
 
     public Argument<A> withTabCompleter(Supplier<List<String>> tabCompleter) {

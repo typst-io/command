@@ -1,5 +1,6 @@
 package io.typecraft.command;
 
+import io.typecraft.command.i18n.MessageId;
 import lombok.Data;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public interface CommandFailure<A> {
 
     @Data
     class ParsingFailure<A> implements CommandFailure<A> {
-        private final List<LangId> names;
+        private final List<MessageId> names;
         private final Command<A> command;
     }
 }

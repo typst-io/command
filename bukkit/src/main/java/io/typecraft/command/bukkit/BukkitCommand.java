@@ -3,6 +3,7 @@ package io.typecraft.command.bukkit;
 import io.typecraft.command.Command;
 import io.typecraft.command.*;
 import io.typecraft.command.config.CommandConfig;
+import io.typecraft.command.i18n.MessageId;
 import io.typecraft.command.i18n.Language;
 import io.vavr.control.Either;
 import lombok.experimental.UtilityClass;
@@ -106,10 +107,10 @@ public class BukkitCommand {
             List<String> usages = new ArrayList<>(getCommandUsages(
                     langs, label, unknown.getArguments(), unknown.getIndex(), unknown.getCommand()
             ));
-            usages.add(String.format(LangId.commandNotExists.getMessage(langs), input));
+            usages.add(String.format(MessageId.commandNotExists.getMessage(langs), input));
             return usages;
         }
-        return Collections.singletonList(LangId.commandWrongUsage.getMessage(langs));
+        return Collections.singletonList(MessageId.commandWrongUsage.getMessage(langs));
     }
 
     private static class PluginTabExecutor<A> implements CommandExecutor, TabCompleter, PluginIdentifiableCommand {
