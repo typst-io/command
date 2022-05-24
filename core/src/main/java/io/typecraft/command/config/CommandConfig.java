@@ -1,6 +1,7 @@
 package io.typecraft.command.config;
 
 import io.typecraft.command.i18n.Language;
+import io.typecraft.command.i18n.MessageId;
 import io.typecraft.command.i18n.PluginLanguage;
 import io.vavr.Tuple2;
 import lombok.Data;
@@ -15,6 +16,16 @@ public class CommandConfig {
     private final Locale defaultLocale;
     private final Map<Locale, Map<String, String>> baseLangs;
     private final Map<String, Map<Locale, Map<String, String>>> pluginLangs;
+    private static final CommandConfig defaultConfig =
+            new CommandConfig(
+                    Locale.getDefault(),
+                    MessageId.defaultLangs,
+                    Collections.emptyMap()
+            );
+
+    public static CommandConfig ofDefault() {
+        return defaultConfig;
+    }
 
     public Map<String, String> getPluginMessagesWithBase(Locale locale, String pluginName) {
         Map<Locale, Map<String, String>> langs = getPluginLangsWithBase(pluginName);

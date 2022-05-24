@@ -2,11 +2,13 @@ package io.typecraft.command.bukkit;
 
 import io.typecraft.command.Command;
 import io.typecraft.command.*;
+import io.typecraft.command.bukkit.config.BukkitCommandConfig;
 import io.typecraft.command.config.CommandConfig;
-import io.typecraft.command.i18n.MessageId;
 import io.typecraft.command.i18n.Language;
+import io.typecraft.command.i18n.MessageId;
 import io.vavr.control.Either;
 import lombok.experimental.UtilityClass;
+import org.bukkit.Bukkit;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -23,6 +25,17 @@ import java.util.stream.Stream;
 
 @UtilityClass
 public class BukkitCommand {
+    /**
+     * Register a command with CommandConfig
+     *
+     * @param commandName  The main name of the command
+     * @param executor     The executor of the command
+     * @param tabCompleter The tab completer of the command
+     * @param getConfig    The config for internalization
+     * @param plugin       The plugin that depends on the command
+     * @param command      The node of the command
+     * @param <A>          The result of the command
+     */
     public static <A> void registerWithConfig(
             String commandName,
             BiConsumer<CommandSender, A> executor,
@@ -41,13 +54,14 @@ public class BukkitCommand {
     }
 
     /**
-     * To use this register, your plugin should depend on `BukkitCommand` plugin. If you don't, use `BukkitCommand.registerWithConfig` instead.
-     * @param commandName The main name of the command
-     * @param executor The executor of the command
+     * To use this register, your plugin must depend on `BukkitCommand` plugin. If you don't, use `BukkitCommand.registerWithConfig` instead.
+     *
+     * @param commandName  The main name of the command
+     * @param executor     The executor of the command
      * @param tabCompleter The tab completer of the command
-     * @param plugin The plugin that depends on the command
-     * @param command The node of the command
-     * @param <A> The result of the command
+     * @param plugin       The plugin that depends on the command
+     * @param command      The node of the command
+     * @param <A>          The result of the command
      */
     public static <A> void register(
             String commandName,
@@ -56,7 +70,12 @@ public class BukkitCommand {
             JavaPlugin plugin,
             Command<A> command
     ) {
-        registerWithConfig(commandName, executor, tabCompleter, () -> CommandBukkitPlugin.get().getCommandConfig(), plugin, command);
+        registerWithConfig(commandName, executor, tabCompleter, () -> {
+            Plugin kernel = Bukkit.getPluginManager().getPlugin("BukkitCommand");
+            return kernel instanceof CommandBukkitPlugin
+                    ? ((CommandBukkitPlugin) kernel).getCommandConfig()
+                    : BukkitCommandConfig.ofDefault();
+        }, plugin, command);
     }
 
 
