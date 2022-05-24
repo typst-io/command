@@ -3,7 +3,10 @@ package io.typecraft.command.i18n;
 import lombok.Data;
 import lombok.With;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
 @With
 @Data
@@ -28,6 +31,10 @@ public class MessageId {
 
     public static MessageId of(String id) {
         return new MessageId(id, "");
+    }
+
+    public static MessageId ofEmpty() {
+        return new MessageId("", "");
     }
 
     public String getMessage(Map<String, String> messages) {

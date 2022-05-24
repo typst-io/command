@@ -23,7 +23,8 @@ public class CommandTest {
                     // strArg: Argument<String>
                     pair("add", Command.argument(AddItem::new, intArg, strArg)),
                     pair("remove", Command.argument(RemoveItem::new, intArg)),
-                    pair("page", Command.argument(PageItem::new, intTabArg))
+                    pair("page", Command.argument(PageItem::new, intTabArg)),
+                    pair("lazy", Command.argument(() -> null))
             );
     private static final Command.Mapping<MyCommand> itemCommandWithFallback =
             itemCommand.withFallback(Command.present(new FallbackItem()));
@@ -145,7 +146,7 @@ public class CommandTest {
         String name = "someName";
         String[] args = new String[]{"item", "add", String.valueOf(index), name};
         assertEquals(
-                Either.right(new CommandSuccess<>(new String[0], args.length, new AddItem(index, name))),
+                Either.right(new CommandSuccess<>(args, args.length, new AddItem(index, name))),
                 Command.parse(args, rootCommand)
         );
     }
@@ -210,7 +211,7 @@ public class CommandTest {
     public void tabSub() {
         String[] args = new String[]{"item", ""};
         assertEquals(
-                CommandTabResult.suggestion(Arrays.asList("open", "add", "remove", "page")),
+                CommandTabResult.suggestion(Arrays.asList("open", "add", "remove", "page", "lazy")),
                 Command.tabComplete(args, rootCommand)
         );
     }

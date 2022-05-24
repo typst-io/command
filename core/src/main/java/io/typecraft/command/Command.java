@@ -3,6 +3,7 @@ package io.typecraft.command;
 import io.typecraft.command.i18n.MessageId;
 import io.vavr.*;
 import io.vavr.control.Either;
+import io.vavr.control.Option;
 import lombok.Data;
 import lombok.With;
 import org.jetbrains.annotations.Nullable;
@@ -44,34 +45,13 @@ public interface Command<A> {
 
     @Data
     @With
-    class Present<A> implements Command<A> {
-        private final A value;
-        private final MessageId descriptionId;
-
-        private Present(A value, MessageId descriptionId) {
-            this.value = value;
-            this.descriptionId = descriptionId;
-        }
-
-        public Present<A> withDescription(String description) {
-            return withDescriptionId(MessageId.of("").withMessage(description));
-        }
-
-        @Override
-        public <B> Present<B> map(Function<? super A, ? extends B> f) {
-            return new Present<>(f.apply(value), getDescriptionId());
-        }
-    }
-
-    @Data
-    @With
     class Parser<A> implements Command<A> {
-        private final Function<List<String>, Tuple2<Optional<A>, List<String>>> parser;
+        private final Function<List<String>, Tuple2<Option<A>, List<String>>> parser;
         private final List<Supplier<List<String>>> tabCompleters;
         private final List<MessageId> names;
         private final MessageId descriptionId;
 
-        private Parser(Function<List<String>, Tuple2<Optional<A>, List<String>>> parser, List<Supplier<List<String>>> tabCompleters, List<MessageId> names, MessageId descriptionId) {
+        private Parser(Function<List<String>, Tuple2<Option<A>, List<String>>> parser, List<Supplier<List<String>>> tabCompleters, List<MessageId> names, MessageId descriptionId) {
             this.parser = parser;
             this.tabCompleters = tabCompleters;
             this.names = names;
@@ -103,13 +83,22 @@ public interface Command<A> {
         return new Mapping<>(map, null);
     }
 
-    static <A> Present<A> present(A value) {
-        return new Present<>(value, MessageId.of(""));
+    static <A> Parser<A> present(A value) {
+        return argument(() -> value);
+    }
+
+    static <T> Parser<T> argument(Supplier<T> f) {
+        return new Parser<>(
+                args -> new Tuple2<>(Option.some(f.get()), args),
+                Collections.emptyList(),
+                Collections.singletonList(MessageId.of("")),
+                MessageId.ofEmpty()
+        );
     }
 
     static <T, A> Parser<T> argument(Function<? super A, ? extends T> f, Argument<A> argument) {
         return new Parser<>(
-                args -> argument.getParser().apply(args).map1(aO -> aO.map(f)),
+                args -> argument.getParser().apply(args).map1(aO -> Option.ofOptional(aO).map(f)),
                 argument.getTabCompleters(),
                 argument.getIds(),
                 MessageId.of("")
@@ -167,15 +156,18 @@ public interface Command<A> {
                         ? parseWithIndex(index + 1, args, subCommand)
                         : Either.left(new CommandFailure.UnknownSubCommand<>(args, index, mapCommand));
             }
-        } else if (command instanceof Present) {
-            Present<A> present = (Present<A>) command;
-            return Either.right(new CommandSuccess<>(args, index, present.getValue()));
         } else if (command instanceof Parser) {
             Parser<A> parser = (Parser<A>) command;
-            List<String> list = new ArrayList<>(Arrays.asList(Arrays.copyOfRange(args, index, args.length)));
-            A a = parser.getParser().apply(list)._1.orElse(null);
-            return a != null
-                    ? Either.right(new CommandSuccess<>(new String[0], args.length, a))
+            List<String> list = index <= args.length
+                    ? new ArrayList<>(Arrays.asList(Arrays.copyOfRange(args, index, args.length)))
+                    : Collections.emptyList();
+            Tuple2<Option<A>, List<String>> result = parser.getParser().apply(list);
+            Option<A> aO = result._1;
+            List<String> remainList = result._2;
+            A a = aO.getOrNull();
+            int currentIndex = index + list.size() - remainList.size();
+            return aO.isDefined()
+                    ? Either.right(new CommandSuccess<>(args, currentIndex, a))
                     : Either.left(new CommandFailure.ParsingFailure<>(parser.getNames(), parser));
         }
         throw new UnsupportedOperationException();
@@ -202,10 +194,6 @@ public interface Command<A> {
                         ? tabCompleteWithIndex(index + 1, args, subCommand)
                         : CommandTabResult.suggestion(Collections.emptyList());
             }
-        } else if (command instanceof Present) {
-            Present<A> present = (Present<A>) command;
-            String[] newArgs = Arrays.copyOfRange(args, index, args.length);
-            return CommandTabResult.present(newArgs, present.getValue());
         } else if (command instanceof Parser) {
             Parser<A> parser = (Parser<A>) command;
             int pos = args.length - index - 1;
@@ -247,13 +235,7 @@ public interface Command<A> {
     }
 
     static <A> CommandSpec getSpec(Command<A> cmd) {
-        if (cmd instanceof Command.Present) {
-            Present<A> present = (Present<A>) cmd;
-            return CommandSpec.of(
-                    Collections.emptyList(),
-                    present.getDescriptionId()
-            );
-        } else if (cmd instanceof Command.Parser) {
+        if (cmd instanceof Command.Parser) {
             Parser<A> parser = (Parser<A>) cmd;
             return CommandSpec.of(
                     parser.getNames(),
