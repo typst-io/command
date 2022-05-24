@@ -58,5 +58,12 @@ allprojects {
         signing {
             sign(publishing.publications[moduleName])
         }
+        java {
+            withSourcesJar()
+            withJavadocJar()
+        }
+        tasks.javadoc {
+            options.encoding = 'UTF-8'
+        }
     }
 }

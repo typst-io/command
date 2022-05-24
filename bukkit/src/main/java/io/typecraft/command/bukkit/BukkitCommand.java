@@ -42,6 +42,12 @@ public class BukkitCommand {
 
     /**
      * To use this register, your plugin should depend on `BukkitCommand` plugin. If you don't, use `BukkitCommand.registerWithConfig` instead.
+     * @param commandName The main name of the command
+     * @param executor The executor of the command
+     * @param tabCompleter The tab completer of the command
+     * @param plugin The plugin that depends on the command
+     * @param command The node of the command
+     * @param <A> The result of the command
      */
     public static <A> void register(
             String commandName,
