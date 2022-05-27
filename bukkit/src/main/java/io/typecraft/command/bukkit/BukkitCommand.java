@@ -97,7 +97,7 @@ public class BukkitCommand {
         return Command.tabComplete(args, command);
     }
 
-    private static <A> List<String> getCommandUsages(Map<String, String> langs, String label, String[] args, int position, Command<A> cmd) {
+    static <A> List<String> getCommandUsages(Map<String, String> langs, String label, String[] args, int position, Command<A> cmd) {
         String[] succArgs = args.length >= 1
                 ? Arrays.copyOfRange(args, 0, position)
                 : new String[0];
@@ -110,9 +110,11 @@ public class BukkitCommand {
                             ))
                             .collect(Collectors.toList());
                     CommandSpec spec = Command.getSpec(pair.getValue());
-                    String argSuffix = spec.getArguments().isEmpty()
-                            ? ""
-                            : " §e" + spec.getArguments().stream().map(s -> String.format("(%s)", s.getMessage(langs))).collect(Collectors.joining(" "));
+                    String argSuffix = spec.getArguments().stream().anyMatch(id -> !id.getId().isEmpty())
+                            ? " §e" + spec.getArguments().stream()
+                            .map(s -> String.format("(%s)", s.getMessage(langs)))
+                            .collect(Collectors.joining(" "))
+                            : "";
                     String description = spec.getDescriptionId().getMessage(langs);
                     String descSuffix = description.isEmpty()
                             ? ""

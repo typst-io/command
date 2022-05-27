@@ -24,7 +24,7 @@ public class CommandTest {
                     pair("add", Command.argument(AddItem::new, intArg, strArg)),
                     pair("remove", Command.argument(RemoveItem::new, intArg)),
                     pair("page", Command.argument(PageItem::new, intTabArg)),
-                    pair("lazy", Command.argument(() -> null))
+                    pair("lazy", Command.present(new AddItem(0, null)))
             );
     private static final Command.Mapping<MyCommand> itemCommandWithFallback =
             itemCommand.withFallback(Command.present(new FallbackItem()));

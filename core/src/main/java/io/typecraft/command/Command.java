@@ -105,27 +105,27 @@ public interface Command<A> {
         );
     }
 
-    static <T, A, B> Command<T> argument(Function2<? super A, ? super B, ? extends T> f, Argument<A> argA, Argument<B> argB) {
+    static <T, A, B> Parser<T> argument(Function2<? super A, ? super B, ? extends T> f, Argument<A> argA, Argument<B> argB) {
         return argument(tup -> f.apply(tup._1(), tup._2()), Argument.product(argA, argB));
     }
 
-    static <T, A, B, C> Command<T> argument(Function3<? super A, ? super B, ? super C, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC) {
+    static <T, A, B, C> Parser<T> argument(Function3<? super A, ? super B, ? super C, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC) {
         return argument(tup -> f.apply(tup._1(), tup._2(), tup._3()), Argument.product(argA, argB, argC));
     }
 
-    static <T, A, B, C, D> Command<T> argument(Function4<? super A, ? super B, ? super C, ? super D, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD) {
+    static <T, A, B, C, D> Parser<T> argument(Function4<? super A, ? super B, ? super C, ? super D, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD) {
         return argument(tup -> f.apply(tup._1(), tup._2(), tup._3(), tup._4()), Argument.product(argA, argB, argC, argD));
     }
 
-    static <T, A, B, C, D, E> Command<T> argument(Function5<? super A, ? super B, ? super C, ? super D, ? super E, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE) {
+    static <T, A, B, C, D, E> Parser<T> argument(Function5<? super A, ? super B, ? super C, ? super D, ? super E, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE) {
         return argument(tup -> f.apply(tup._1(), tup._2(), tup._3(), tup._4(), tup._5()), Argument.product(argA, argB, argC, argD, argE));
     }
 
-    static <T, A, B, C, D, E, F> Command<T> argument(Function6<? super A, ? super B, ? super C, ? super D, ? super E, ? super F, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE, Argument<F> argF) {
+    static <T, A, B, C, D, E, F> Parser<T> argument(Function6<? super A, ? super B, ? super C, ? super D, ? super E, ? super F, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE, Argument<F> argF) {
         throw new UnsupportedOperationException("TODO");
     }
 
-    static <T, A, B, C, D, E, F, G> Command<T> argument(Function7<? super A, ? super B, ? super C, ? super D, ? super E, ? super F, ? super G, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE, Argument<F> argF, Argument<G> argG) {
+    static <T, A, B, C, D, E, F, G> Parser<T> argument(Function7<? super A, ? super B, ? super C, ? super D, ? super E, ? super F, ? super G, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE, Argument<F> argF, Argument<G> argG) {
         throw new UnsupportedOperationException("TODO");
     }
 
