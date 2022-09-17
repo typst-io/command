@@ -7,7 +7,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -24,6 +23,6 @@ public class BukkitArgument {
             Argument.ofUnary(
                     BukkitLangId.typeBukkitOfflinePlayer,
                     s -> Optional.of(Bukkit.getOfflinePlayer(s)),
-                    () -> Arrays.stream(Bukkit.getOfflinePlayers()).map(OfflinePlayer::getName).collect(Collectors.toList())
+                    () -> Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList())
             );
 }
