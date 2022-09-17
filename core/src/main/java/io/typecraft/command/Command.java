@@ -204,7 +204,7 @@ public interface Command<A> {
             String lowerArgument = argument.toLowerCase();
             List<String> tabComplete = tabCompleter != null
                     ? tabCompleter.get().stream()
-                    .filter(s -> s.startsWith(lowerArgument))
+                    .filter(s -> s.toLowerCase().startsWith(lowerArgument))
                     .collect(Collectors.toList())
                     : Collections.emptyList();
             return CommandTabResult.suggestion(tabComplete);
