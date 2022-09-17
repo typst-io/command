@@ -68,6 +68,14 @@ public class Argument<A> {
         );
     }
 
+    public Argument<Optional<A>> asOptional() {
+        return new Argument<>(
+                getIds(),
+                args -> getParser().apply(args).map1(Optional::of),
+                getTabCompleters()
+        );
+    }
+
     public Argument<A> withMessage(String name) {
         List<MessageId> ids = getIds();
         MessageId id = ids.size() >= 1 ? ids.get(0) : null;
