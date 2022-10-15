@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 public class Argument<A> {
     private final List<MessageId> ids;
     private final Function<List<String>, Tuple2<Optional<A>, List<String>>> parser;
+    // TODO: Function<List<String>, Supplier<Collection<String>>>
     private final List<Supplier<List<String>>> tabCompleters;
     public static final Argument<String> strArg =
             ofUnary(MessageId.typeString, Optional::of, Collections::emptyList);

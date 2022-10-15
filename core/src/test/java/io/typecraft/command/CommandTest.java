@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CommandTest {
     private static final Argument<Integer> intTabArg = intArg.withTabCompleter(() -> Arrays.asList("10", "20"));
+    private static final Argument<Integer> intTabArg2 = intArg.withTabCompleter(() -> Arrays.asList("30", "40"));
     // MyCommand = AddItem | RemoveItem | ...
     private static final Command.Mapping<MyCommand> itemCommand =
             Command.mapping(
@@ -23,7 +24,7 @@ public class CommandTest {
                     // strArg: Argument<String>
                     pair("add", Command.argument(AddItem::new, intArg, strArg)),
                     pair("remove", Command.argument(RemoveItem::new, intArg)),
-                    pair("page", Command.argument(PageItem::new, intTabArg)),
+                    pair("page", Command.argument(PageItem::new, intTabArg, intTabArg2)),
                     pair("lazy", Command.present(new AddItem(0, null)))
             );
     private static final Command.Mapping<MyCommand> itemCommandWithFallback =
@@ -80,9 +81,11 @@ public class CommandTest {
 
     public static class PageItem implements MyCommand {
         public final int index;
+        public final int indexB;
 
-        public PageItem(int index) {
+        public PageItem(int index, int indexB) {
             this.index = index;
+            this.indexB = indexB;
         }
     }
 
@@ -234,6 +237,18 @@ public class CommandTest {
         assertEquals(
                 CommandTabResult.suggestion(Collections.singletonList("10")),
                 Command.tabComplete(new String[]{"item", "page", "1"}, rootCommand)
+        );
+    }
+
+    @Test
+    public void tabCustom2() {
+        assertEquals(
+                CommandTabResult.suggestion(Arrays.asList("30", "40")),
+                Command.tabComplete(new String[]{"item", "page", "10", ""}, rootCommand)
+        );
+        assertEquals(
+                CommandTabResult.suggestion(Collections.singletonList("30")),
+                Command.tabComplete(new String[]{"item", "page", "10", "3"}, rootCommand)
         );
     }
 }

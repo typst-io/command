@@ -196,12 +196,13 @@ public interface Command<A> {
             }
         } else if (command instanceof Parser) {
             Parser<A> parser = (Parser<A>) command;
+            String lastArgument = args.length >= 1 ? args[args.length - 1] : "";
             int pos = args.length - index - 1;
             List<Supplier<List<String>>> tabCompleters = parser.getTabCompleters();
             Supplier<List<String>> tabCompleter = tabCompleters.size() > pos && pos >= 0
                     ? tabCompleters.get(pos)
                     : null;
-            String lowerArgument = argument.toLowerCase();
+            String lowerArgument = lastArgument.toLowerCase();
             List<String> tabComplete = tabCompleter != null
                     ? tabCompleter.get().stream()
                     .filter(s -> s.toLowerCase().startsWith(lowerArgument))
