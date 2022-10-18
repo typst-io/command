@@ -10,6 +10,7 @@ public class BukkitLangId {
 
     public static final MessageId typeBukkitPlayer = MessageId.of("player");
     public static final MessageId typeBukkitOfflinePlayer = MessageId.of("offline-player");
+    public static final MessageId typeMaterial = MessageId.of("material");
     public static final Map<Locale, Map<String, String>> defaultLangs = getDefaultLangs();
 
     private static Map<Locale, Map<String, String>> getDefaultLangs() {
