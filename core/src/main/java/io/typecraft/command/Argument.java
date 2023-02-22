@@ -1,10 +1,7 @@
 package io.typecraft.command;
 
 import io.typecraft.command.i18n.MessageId;
-import io.vavr.Tuple2;
-import io.vavr.Tuple3;
-import io.vavr.Tuple4;
-import io.vavr.Tuple5;
+import io.vavr.*;
 import lombok.Data;
 import lombok.With;
 
@@ -89,6 +86,17 @@ public class Argument<A> {
         return withIds(Collections.singletonList(id));
     }
 
+    public <B> Argument<B> map(Function<A, B> f) {
+        return new Argument<>(
+                getIds(),
+                args -> {
+                    Tuple2<Optional<A>, List<String>> pair = getParser().apply(args);
+                    return pair.map1(a -> a.map(f));
+                },
+                getTabCompleters()
+        );
+    }
+
     public String getId() {
         List<MessageId> names = getIds();
         MessageId messageId = names.size() >= 1 ? names.get(0) : null;
@@ -126,7 +134,7 @@ public class Argument<A> {
 
     public static <A, B, C, D> Argument<Tuple4<A, B, C, D>> product(Argument<A> xa, Argument<B> xb, Argument<C> xc, Argument<D> xd) {
         return new Argument<>(
-                flatten(Stream.of(xa.getIds(), xb.getIds(), xc.getIds())),
+                flatten(Stream.of(xa.getIds(), xb.getIds(), xc.getIds(), xd.getIds())),
                 args -> {
                     Tuple2<Optional<A>, List<String>> aPair = xa.getParser().apply(args);
                     Tuple2<Optional<B>, List<String>> bPair = xb.getParser().apply(aPair._2);
@@ -140,7 +148,7 @@ public class Argument<A> {
 
     public static <A, B, C, D, E> Argument<Tuple5<A, B, C, D, E>> product(Argument<A> xa, Argument<B> xb, Argument<C> xc, Argument<D> xd, Argument<E> xe) {
         return new Argument<>(
-                flatten(Stream.of(xa.getIds(), xb.getIds(), xc.getIds())),
+                flatten(Stream.of(xa.getIds(), xb.getIds(), xc.getIds(), xd.getIds(), xe.getIds())),
                 args -> {
                     Tuple2<Optional<A>, List<String>> aPair = xa.getParser().apply(args);
                     Tuple2<Optional<B>, List<String>> bPair = xb.getParser().apply(aPair._2);
@@ -150,6 +158,39 @@ public class Argument<A> {
                     return new Tuple2<>(aPair._1.flatMap(a -> bPair._1.flatMap(b -> cPair._1.flatMap(c -> dPair._1.flatMap(d -> ePair._1.map(e -> new Tuple5<>(a, b, c, d, e)))))), ePair._2);
                 },
                 flatten(Stream.of(xa.getTabCompleters(), xb.getTabCompleters(), xc.getTabCompleters(), xd.getTabCompleters(), xe.getTabCompleters()))
+        );
+    }
+
+    public static <A, B, C, D, E, F> Argument<Tuple6<A, B, C, D, E, F>> product(Argument<A> xa, Argument<B> xb, Argument<C> xc, Argument<D> xd, Argument<E> xe, Argument<F> xf) {
+        return new Argument<>(
+                flatten(Stream.of(xa.getIds(), xb.getIds(), xc.getIds(), xd.getIds(), xe.getIds(), xf.getIds())),
+                args -> {
+                    Tuple2<Optional<A>, List<String>> aPair = xa.getParser().apply(args);
+                    Tuple2<Optional<B>, List<String>> bPair = xb.getParser().apply(aPair._2);
+                    Tuple2<Optional<C>, List<String>> cPair = xc.getParser().apply(bPair._2);
+                    Tuple2<Optional<D>, List<String>> dPair = xd.getParser().apply(cPair._2);
+                    Tuple2<Optional<E>, List<String>> ePair = xe.getParser().apply(dPair._2);
+                    Tuple2<Optional<F>, List<String>> fPair = xf.getParser().apply(ePair._2);
+                    return new Tuple2<>(aPair._1.flatMap(a -> bPair._1.flatMap(b -> cPair._1.flatMap(c -> dPair._1.flatMap(d -> ePair._1.flatMap(e -> fPair._1.map(f -> new Tuple6<>(a, b, c, d, e, f))))))), fPair._2);
+                },
+                flatten(Stream.of(xa.getTabCompleters(), xb.getTabCompleters(), xc.getTabCompleters(), xd.getTabCompleters(), xe.getTabCompleters(), xf.getTabCompleters()))
+        );
+    }
+
+    public static <A, B, C, D, E, F, G> Argument<Tuple7<A, B, C, D, E, F, G>> product(Argument<A> xa, Argument<B> xb, Argument<C> xc, Argument<D> xd, Argument<E> xe, Argument<F> xf, Argument<G> xg) {
+        return new Argument<>(
+                flatten(Stream.of(xa.getIds(), xb.getIds(), xc.getIds(), xd.getIds(), xe.getIds(), xf.getIds(), xg.getIds())),
+                args -> {
+                    Tuple2<Optional<A>, List<String>> aPair = xa.getParser().apply(args);
+                    Tuple2<Optional<B>, List<String>> bPair = xb.getParser().apply(aPair._2);
+                    Tuple2<Optional<C>, List<String>> cPair = xc.getParser().apply(bPair._2);
+                    Tuple2<Optional<D>, List<String>> dPair = xd.getParser().apply(cPair._2);
+                    Tuple2<Optional<E>, List<String>> ePair = xe.getParser().apply(dPair._2);
+                    Tuple2<Optional<F>, List<String>> fPair = xf.getParser().apply(ePair._2);
+                    Tuple2<Optional<G>, List<String>> gPair = xg.getParser().apply(fPair._2);
+                    return new Tuple2<>(aPair._1.flatMap(a -> bPair._1.flatMap(b -> cPair._1.flatMap(c -> dPair._1.flatMap(d -> ePair._1.flatMap(e -> fPair._1.flatMap(f -> gPair._1.map(g -> new Tuple7<>(a, b, c, d, e, f, g)))))))), gPair._2);
+                },
+                flatten(Stream.of(xa.getTabCompleters(), xb.getTabCompleters(), xc.getTabCompleters(), xd.getTabCompleters(), xe.getTabCompleters(), xf.getTabCompleters(), xf.getTabCompleters()))
         );
     }
 

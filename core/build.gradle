@@ -5,7 +5,7 @@ plugins {
     id 'signing'
 }
 
-version '0.3.3'
+version '0.4.0'
 
 repositories {
     mavenCentral()
@@ -17,6 +17,8 @@ dependencies {
     api('io.vavr:vavr:0.10.4')
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    testCompileOnly lombok()
+    testAnnotationProcessor lombok()
 }
 
 test {

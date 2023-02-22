@@ -122,11 +122,11 @@ public interface Command<A> {
     }
 
     static <T, A, B, C, D, E, F> Parser<T> argument(Function6<? super A, ? super B, ? super C, ? super D, ? super E, ? super F, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE, Argument<F> argF) {
-        throw new UnsupportedOperationException("TODO");
+        return argument(tup -> f.apply(tup._1(), tup._2(), tup._3(), tup._4(), tup._5(), tup._6()), Argument.product(argA, argB, argC, argD, argE, argF));
     }
 
     static <T, A, B, C, D, E, F, G> Parser<T> argument(Function7<? super A, ? super B, ? super C, ? super D, ? super E, ? super F, ? super G, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE, Argument<F> argF, Argument<G> argG) {
-        throw new UnsupportedOperationException("TODO");
+        return argument(tup -> f.apply(tup._1(), tup._2(), tup._3(), tup._4(), tup._5(), tup._6(), tup._7()), Argument.product(argA, argB, argC, argD, argE, argF, argG));
     }
 
     static <K, V> Tuple2<K, V> pair(K key, V value) {
