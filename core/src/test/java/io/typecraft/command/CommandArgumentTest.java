@@ -9,11 +9,13 @@ import static io.typecraft.command.Argument.intArg;
 import static io.vavr.API.Tuple;
 
 public class CommandArgumentTest {
-    private <A> void assertNode(String[] args, int nAry, A a, Command.Parser<A> node) {
-        Assertions.assertEquals(nAry, node.getNames().size());
-        Assertions.assertEquals(nAry, node.getTabCompleters().size());
+    private <A extends Tuple> void assertNode(String[] args, A a, Command.Parser<A> node) {
+        int arity = a.arity();
+        Assertions.assertEquals(arity, args.length);
+        Assertions.assertEquals(arity, node.getNames().size());
+        Assertions.assertEquals(arity, node.getTabCompleters().size());
         Assertions.assertEquals(
-                Either.right(new CommandSuccess<>(args, nAry, a)),
+                Either.right(new CommandSuccess<>(args, arity, a)),
                 Command.parse(
                         args,
                         node
@@ -26,7 +28,6 @@ public class CommandArgumentTest {
     public void arg1() {
         assertNode(
                 new String[]{"1"},
-                1,
                 Tuple(1),
                 Command.argument(API::Tuple, intArg)
         );
@@ -36,7 +37,6 @@ public class CommandArgumentTest {
     public void arg2() {
         assertNode(
                 new String[]{"1", "2"},
-                2,
                 Tuple(1, 2),
                 Command.argument(API::Tuple, intArg, intArg)
         );
@@ -46,7 +46,6 @@ public class CommandArgumentTest {
     public void arg3() {
         assertNode(
                 new String[]{"1", "2", "3"},
-                3,
                 Tuple(1, 2, 3),
                 Command.argument(API::Tuple, intArg, intArg, intArg)
         );
@@ -56,7 +55,6 @@ public class CommandArgumentTest {
     public void arg4() {
         assertNode(
                 new String[]{"1", "2", "3", "4"},
-                4,
                 Tuple(1, 2, 3, 4),
                 Command.argument(API::Tuple, intArg, intArg, intArg, intArg)
         );
@@ -66,7 +64,6 @@ public class CommandArgumentTest {
     public void arg5() {
         assertNode(
                 new String[]{"1", "2", "3", "4", "5"},
-                5,
                 Tuple(1, 2, 3, 4, 5),
                 Command.argument(API::Tuple, intArg, intArg, intArg, intArg, intArg)
         );
@@ -76,7 +73,6 @@ public class CommandArgumentTest {
     public void arg6() {
         assertNode(
                 new String[]{"1", "2", "3", "4", "5", "6"},
-                6,
                 Tuple(1, 2, 3, 4, 5, 6),
                 Command.argument(API::Tuple, intArg, intArg, intArg, intArg, intArg, intArg)
         );
@@ -86,7 +82,6 @@ public class CommandArgumentTest {
     public void arg7() {
         assertNode(
                 new String[]{"1", "2", "3", "4", "5", "6", "7"},
-                7,
                 Tuple(1, 2, 3, 4, 5, 6, 7),
                 Command.argument(API::Tuple, intArg, intArg, intArg, intArg, intArg, intArg, intArg)
         );
