@@ -8,8 +8,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.typecraft.command.Argument.intArg;
-import static io.typecraft.command.Argument.strArg;
+import static io.typecraft.command.StandardArguments.intArg;
+import static io.typecraft.command.StandardArguments.strArg;
 import static io.typecraft.command.Command.pair;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -179,7 +179,7 @@ public class CommandTest {
                             Stream.of(s)
                     ))
                     .collect(Collectors.toList());
-            String description = Command.getSpec(pair.getValue()).getDescriptionId().getMessage();
+            String description = Command.getSpec(pair.getValue()).getDescription();
             String suffix = description.isEmpty()
                     ? ""
                     : " - " + description;

@@ -1,6 +1,6 @@
 package io.typecraft.command;
 
-import io.typecraft.command.i18n.MessageId;
+import io.typecraft.command.product.ArgumentProduct;
 import io.vavr.*;
 import io.vavr.control.Either;
 import io.vavr.control.Option;
@@ -8,11 +8,15 @@ import lombok.Data;
 import lombok.With;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.Collections.singletonList;
 
 public interface Command<A> {
     <B> Command<B> map(Function<? super A, ? extends B> f);
@@ -20,18 +24,18 @@ public interface Command<A> {
     @Data
     @With
     class Mapping<A> implements Command<A> {
-        private final Map<String, Command<A>> map;
+        private final Map<String, Command<A>> commandMap;
         private final Command<A> fallback;
 
-        private Mapping(Map<String, Command<A>> map, @Nullable Command<A> fallback) {
-            this.map = map;
+        private Mapping(Map<String, Command<A>> commandMap, @Nullable Command<A> fallback) {
+            this.commandMap = commandMap;
             this.fallback = fallback;
         }
 
         @Override
         public <B> Mapping<B> map(Function<? super A, ? extends B> f) {
-            Map<String, Command<B>> newMap = new HashMap<>(this.map.size());
-            for (Map.Entry<String, Command<A>> pair : map.entrySet()) {
+            Map<String, Command<B>> newMap = new HashMap<>(this.commandMap.size());
+            for (Entry<String, Command<A>> pair : commandMap.entrySet()) {
                 newMap.put(pair.getKey(), pair.getValue().map(f));
             }
             Command<A> fallback = getFallback().orElse(null);
@@ -48,14 +52,14 @@ public interface Command<A> {
     class Parser<A> implements Command<A> {
         private final Function<List<String>, Tuple2<Option<A>, List<String>>> parser;
         private final List<Supplier<List<String>>> tabCompleters;
-        private final List<MessageId> names;
-        private final MessageId descriptionId;
+        private final List<String> names;
+        private final String description;
 
-        private Parser(Function<List<String>, Tuple2<Option<A>, List<String>>> parser, List<Supplier<List<String>>> tabCompleters, List<MessageId> names, MessageId descriptionId) {
+        private Parser(Function<List<String>, Tuple2<Option<A>, List<String>>> parser, List<Supplier<List<String>>> tabCompleters, List<String> names, String description) {
             this.parser = parser;
             this.tabCompleters = tabCompleters;
             this.names = names;
-            this.descriptionId = descriptionId;
+            this.description = description;
         }
 
         @Override
@@ -64,12 +68,8 @@ public interface Command<A> {
                     args -> parser.apply(args).map1(aO -> aO.map(f)),
                     tabCompleters,
                     getNames(),
-                    getDescriptionId()
+                    getDescription()
             );
-        }
-
-        public Parser<A> withDescription(String description) {
-            return withDescriptionId(MessageId.of("").withMessage(description));
         }
     }
 
@@ -91,8 +91,8 @@ public interface Command<A> {
         return new Parser<>(
                 args -> new Tuple2<>(Option.some(f.get()), args),
                 Collections.emptyList(),
-                Collections.singletonList(MessageId.of("")),
-                MessageId.ofEmpty()
+                singletonList(""),
+                ""
         );
     }
 
@@ -100,33 +100,33 @@ public interface Command<A> {
         return new Parser<>(
                 args -> argument.getParser().apply(args).map1(aO -> Option.ofOptional(aO).map(f)),
                 argument.getTabCompleters(),
-                argument.getIds(),
-                MessageId.of("")
+                argument.getNames(),
+                ""
         );
     }
 
     static <T, A, B> Parser<T> argument(Function2<? super A, ? super B, ? extends T> f, Argument<A> argA, Argument<B> argB) {
-        return argument(tup -> f.apply(tup._1(), tup._2()), Argument.product(argA, argB));
+        return argument(tup -> f.apply(tup._1(), tup._2()), ArgumentProduct.product(argA, argB));
     }
 
     static <T, A, B, C> Parser<T> argument(Function3<? super A, ? super B, ? super C, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC) {
-        return argument(tup -> f.apply(tup._1(), tup._2(), tup._3()), Argument.product(argA, argB, argC));
+        return argument(tup -> f.apply(tup._1(), tup._2(), tup._3()), ArgumentProduct.product(argA, argB, argC));
     }
 
     static <T, A, B, C, D> Parser<T> argument(Function4<? super A, ? super B, ? super C, ? super D, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD) {
-        return argument(tup -> f.apply(tup._1(), tup._2(), tup._3(), tup._4()), Argument.product(argA, argB, argC, argD));
+        return argument(tup -> f.apply(tup._1(), tup._2(), tup._3(), tup._4()), ArgumentProduct.product(argA, argB, argC, argD));
     }
 
     static <T, A, B, C, D, E> Parser<T> argument(Function5<? super A, ? super B, ? super C, ? super D, ? super E, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE) {
-        return argument(tup -> f.apply(tup._1(), tup._2(), tup._3(), tup._4(), tup._5()), Argument.product(argA, argB, argC, argD, argE));
+        return argument(tup -> f.apply(tup._1(), tup._2(), tup._3(), tup._4(), tup._5()), ArgumentProduct.product(argA, argB, argC, argD, argE));
     }
 
     static <T, A, B, C, D, E, F> Parser<T> argument(Function6<? super A, ? super B, ? super C, ? super D, ? super E, ? super F, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE, Argument<F> argF) {
-        return argument(tup -> f.apply(tup._1(), tup._2(), tup._3(), tup._4(), tup._5(), tup._6()), Argument.product(argA, argB, argC, argD, argE, argF));
+        return argument(tup -> f.apply(tup._1(), tup._2(), tup._3(), tup._4(), tup._5(), tup._6()), ArgumentProduct.product(argA, argB, argC, argD, argE, argF));
     }
 
     static <T, A, B, C, D, E, F, G> Parser<T> argument(Function7<? super A, ? super B, ? super C, ? super D, ? super E, ? super F, ? super G, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE, Argument<F> argF, Argument<G> argG) {
-        return argument(tup -> f.apply(tup._1(), tup._2(), tup._3(), tup._4(), tup._5(), tup._6(), tup._7()), Argument.product(argA, argB, argC, argD, argE, argF, argG));
+        return argument(tup -> f.apply(tup._1(), tup._2(), tup._3(), tup._4(), tup._5(), tup._6(), tup._7()), ArgumentProduct.product(argA, argB, argC, argD, argE, argF, argG));
     }
 
     static <K, V> Tuple2<K, V> pair(K key, V value) {
@@ -151,7 +151,7 @@ public interface Command<A> {
                         ? parseWithIndex(index + 1, args, fallback)
                         : Either.left(new CommandFailure.FewArguments<>(args, index, mapCommand));
             } else {
-                Command<A> subCommand = mapCommand.getMap().get(argument);
+                Command<A> subCommand = mapCommand.getCommandMap().get(argument);
                 return subCommand != null
                         ? parseWithIndex(index + 1, args, subCommand)
                         : Either.left(new CommandFailure.UnknownSubCommand<>(args, index, mapCommand));
@@ -184,12 +184,12 @@ public interface Command<A> {
             // if tail
             if (index >= args.length - 1) {
                 return CommandTabResult.suggestion(
-                        mapCommand.getMap().keySet().stream()
+                        mapCommand.getCommandMap().keySet().stream()
                                 .filter(key -> key.toLowerCase().startsWith(argument))
                                 .collect(Collectors.toList())
                 );
             } else {
-                Command<A> subCommand = mapCommand.getMap().get(argument);
+                Command<A> subCommand = mapCommand.getCommandMap().get(argument);
                 return subCommand != null
                         ? tabCompleteWithIndex(index + 1, args, subCommand)
                         : CommandTabResult.suggestion(Collections.emptyList());
@@ -213,22 +213,22 @@ public interface Command<A> {
         return CommandTabResult.suggestion(Collections.emptyList());
     }
 
-    static <A> List<Map.Entry<List<String>, Command<A>>> getEntries(Command<A> cmd) {
+    static <A> List<Entry<List<String>, Command<A>>> getEntries(Command<A> cmd) {
         if (cmd instanceof Command.Mapping) {
             Mapping<A> mapping = (Mapping<A>) cmd;
-            return mapping.getMap().entrySet().stream()
+            return mapping.getCommandMap().entrySet().stream()
                     .flatMap(pair -> {
-                        List<Map.Entry<List<String>, Command<A>>> subEntries = getEntries(pair.getValue());
+                        List<Entry<List<String>, Command<A>>> subEntries = getEntries(pair.getValue());
                         return subEntries.size() >= 1
                                 ? subEntries.stream()
-                                .map(subPair -> new AbstractMap.SimpleEntry<>(
+                                .map(subPair -> new SimpleEntry<>(
                                         Stream.concat(
                                                 Stream.of(pair.getKey()),
                                                 subPair.getKey().stream()
                                         ).collect(Collectors.toList()),
                                         subPair.getValue()
                                 ))
-                                : Stream.of(new AbstractMap.SimpleEntry<>(Collections.singletonList(pair.getKey()), pair.getValue()));
+                                : Stream.of(new SimpleEntry<>(singletonList(pair.getKey()), pair.getValue()));
                     })
                     .collect(Collectors.toList());
         }
@@ -240,7 +240,7 @@ public interface Command<A> {
             Parser<A> parser = (Parser<A>) cmd;
             return CommandSpec.of(
                     parser.getNames(),
-                    parser.getDescriptionId()
+                    parser.getDescription()
             );
         }
         return CommandSpec.empty;

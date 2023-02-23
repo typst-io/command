@@ -5,7 +5,7 @@ import io.vavr.control.Either;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static io.typecraft.command.Argument.intArg;
+import static io.typecraft.command.StandardArguments.intArg;
 import static io.vavr.API.Tuple;
 
 public class CommandArgumentTest {
