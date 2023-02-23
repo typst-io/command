@@ -1,14 +1,15 @@
 package io.typecraft.command;
 
-import io.vavr.*;
+import io.vavr.Tuple2;
 import lombok.Data;
 import lombok.With;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @SuppressWarnings("DuplicatedCode")
 @Data(staticConstructor = "of")
@@ -55,6 +56,10 @@ public class Argument<A> {
                 },
                 getTabCompleters()
         );
+    }
+
+    public Argument<A> withName(String name) {
+        return withNames(Collections.singletonList(name));
     }
 
     public Argument<A> withTabCompleter(Supplier<List<String>> tabCompleter) {
