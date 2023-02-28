@@ -2,6 +2,32 @@
 
 A pure, functional, typesafe command line parser.
 
+# Import
+
+## Gradle
+
+```groovy
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'io.typecraft:command-bukkit:0.7.0'
+}
+```
+
+## Maven
+
+```xml
+<dependency>
+    <groupId>io.typecraft</groupId>
+    <artifactId>command-bukkit</artifactId>
+    <version>0.7.0</version>
+</dependency>
+```
+
+# Usage
+
 ```java
 // core/src/test/../CommandTest.java
 // MyCommand = AddItem | RemoveItem | OpenItemList | ReloadCommand
