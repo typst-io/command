@@ -5,14 +5,14 @@ plugins {
     id 'signing'
 }
 
-version '0.3.3'
+version '0.7.0'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation 'org.scala-lang:scala-library:2.13.8'
+    implementation 'org.scala-lang:scala-library:2.13.10'
     api(project(':command-core'))
 }
 
