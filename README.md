@@ -12,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.typecraft:command-bukkit:0.7.0'
+    implementation 'io.typecraft:command-bukkit:0.8.0'
 }
 ```
 
@@ -22,7 +22,7 @@ dependencies {
 <dependency>
     <groupId>io.typecraft</groupId>
     <artifactId>command-bukkit</artifactId>
-    <version>0.7.0</version>
+    <version>0.8.0</version>
 </dependency>
 ```
 
