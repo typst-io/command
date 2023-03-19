@@ -4,6 +4,9 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/bukkit/command.command-bukkit.main.iml" filepath="$PROJECT_DIR$/.idea/modules/bukkit/command.command-bukkit.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/command.command-core.main.iml" filepath="$PROJECT_DIR$/.idea/modules/core/command.command-core.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/command.command-core.test.iml" filepath="$PROJECT_DIR$/.idea/modules/core/command.command-core.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/bukkit/io.typecraft.command.command-bukkit.main.iml" filepath="$PROJECT_DIR$/.idea/modules/bukkit/io.typecraft.command.command-bukkit.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/io.typecraft.command.command-core.main.iml" filepath="$PROJECT_DIR$/.idea/modules/core/io.typecraft.command.command-core.main.iml" />
     </modules>
   </component>
 </project>

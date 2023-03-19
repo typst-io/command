@@ -6,8 +6,6 @@ plugins {
     id 'signing'
 }
 
-version '0.7.0'
-
 repositories {
     mavenCentral()
 }

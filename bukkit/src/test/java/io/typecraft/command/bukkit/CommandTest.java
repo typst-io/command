@@ -1,7 +1,6 @@
 package io.typecraft.command.bukkit;
 
 import io.typecraft.command.Command;
-import io.typecraft.command.CommandHelp;
 import org.bukkit.ChatColor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -10,16 +9,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static io.typecraft.command.Command.pair;
 import static io.typecraft.command.StandardArguments.intArg;
 import static io.typecraft.command.StandardArguments.strArg;
-import static io.typecraft.command.Command.pair;
 import static java.util.function.Function.identity;
 
 public class CommandTest {
     @Test
     public void help() {
         List<String> msgs = BukkitCommands.getCommandUsages(
-                CommandHelp::format,
+                new MockSender(),
                 "mycmd",
                 new String[0],
                 1,
@@ -30,8 +29,10 @@ public class CommandTest {
                         pair("d", Command.argument((a, b) -> null, strArg, intArg).withDescription("desc")),
                         pair("e", Command.mapping(
                                 pair("a", Command.present(null))
-                        ))
-                )
+                        )),
+                        pair("f", Command.argument((a, b) -> null, strArg, intArg).withDescription("desc").withPermission("test.permission"))
+                ),
+                BukkitCommandHelp::format
         ).stream().map(ChatColor::stripColor).collect(Collectors.toList());
         Assertions.assertEquals(
                 Arrays.asList(

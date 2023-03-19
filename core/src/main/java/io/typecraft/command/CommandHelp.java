@@ -19,7 +19,7 @@ public class CommandHelp {
         List<String> args = help.getArguments();
         String argSuffix = spec.getArguments().stream().anyMatch(id -> !id.isEmpty())
                 ? " §e" + spec.getArguments().stream()
-                .map(s -> String.format("(%s)", s))
+                .map(s -> String.format("(%s)", translateToKor(s)))
                 .collect(Collectors.joining(" "))
                 : "";
         String description = spec.getDescription();
@@ -27,5 +27,23 @@ public class CommandHelp {
                 ? ""
                 : " §f- " + description;
         return String.format("§a/%s %s", label, String.join(" ", args)) + argSuffix + descSuffix;
+    }
+
+    public static String translateToKor(String argumentName) {
+        switch (argumentName) {
+            case "string":
+                return "문자열";
+            case "int":
+            case "long":
+                return "정수";
+            case "float":
+            case "double":
+                return "실수";
+            case "bool":
+                return "bool";
+            case "strings":
+                return "문자열..";
+        }
+        return argumentName;
     }
 }

@@ -54,12 +54,20 @@ public interface Command<A> {
         private final List<Supplier<List<String>>> tabCompleters;
         private final List<String> names;
         private final String description;
+        private final String permission;
 
-        private Parser(Function<List<String>, Tuple2<Option<A>, List<String>>> parser, List<Supplier<List<String>>> tabCompleters, List<String> names, String description) {
+        private Parser(
+                Function<List<String>, Tuple2<Option<A>, List<String>>> parser,
+                List<Supplier<List<String>>> tabCompleters,
+                List<String> names,
+                String description,
+                String permission
+        ) {
             this.parser = parser;
             this.tabCompleters = tabCompleters;
             this.names = names;
             this.description = description;
+            this.permission = permission;
         }
 
         @Override
@@ -68,7 +76,8 @@ public interface Command<A> {
                     args -> parser.apply(args).map1(aO -> aO.map(f)),
                     tabCompleters,
                     getNames(),
-                    getDescription()
+                    getDescription(),
+                    getPermission()
             );
         }
     }
@@ -92,6 +101,7 @@ public interface Command<A> {
                 args -> new Tuple2<>(Option.some(f.get()), args),
                 Collections.emptyList(),
                 singletonList(""),
+                "",
                 ""
         );
     }
@@ -101,6 +111,7 @@ public interface Command<A> {
                 args -> argument.getParser().apply(args).map1(aO -> Option.ofOptional(aO).map(f)),
                 argument.getTabCompleters(),
                 argument.getNames(),
+                "",
                 ""
         );
     }
@@ -240,7 +251,8 @@ public interface Command<A> {
             Parser<A> parser = (Parser<A>) cmd;
             return CommandSpec.of(
                     parser.getNames(),
-                    parser.getDescription()
+                    parser.getDescription(),
+                    parser.getPermission()
             );
         }
         return CommandSpec.empty;

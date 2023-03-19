@@ -11,5 +11,6 @@ import java.util.List;
 public class CommandSpec {
     private final List<String> arguments;
     private final String description;
-    public static final CommandSpec empty = new CommandSpec(Collections.emptyList(), "");
+    private final String permission;
+    public static final CommandSpec empty = new CommandSpec(Collections.emptyList(), "", "");
 }

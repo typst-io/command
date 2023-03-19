@@ -34,7 +34,7 @@ public class BukkitCommands {
             BiConsumer<CommandSender, A> executor,
             JavaPlugin plugin
     ) {
-        registerPrime(commandName, command, executor, (sender, a) -> Collections.emptyList(), CommandConfig.empty, plugin);
+        registerPrime(commandName, command, executor, (sender, a) -> Collections.emptyList(), BukkitCommandConfig.empty, plugin);
     }
 
     /**
@@ -52,7 +52,7 @@ public class BukkitCommands {
             String commandName, Command<A> command,
             BiConsumer<CommandSender, A> executor,
             BiFunction<CommandSender, A, List<String>> tabCompleter,
-            CommandConfig config,
+            BukkitCommandConfig config,
             JavaPlugin plugin
     ) {
         PluginTabExecutor<A> pluginTabExecutor = new PluginTabExecutor<>(config, command, commandName, plugin, executor, tabCompleter);
@@ -65,14 +65,14 @@ public class BukkitCommands {
     }
 
 
-    public static <A> Optional<CommandSuccess<A>> execute(CommandSender sender, String label, String[] args, Command<A> command, CommandConfig config) {
+    public static <A> Optional<CommandSuccess<A>> execute(CommandSender sender, String label, String[] args, Command<A> command, BukkitCommandConfig config) {
         Either<CommandFailure<A>, CommandSuccess<A>> result = Command.parse(args, command);
         if (result.isRight()) {
             CommandSuccess<A> success = result.get();
             return Optional.of(success);
         } else if (result.isLeft()) {
             CommandFailure<A> failure = result.getLeft();
-            for (String line : getFailureMessage(config, label, failure)) {
+            for (String line : getFailureMessage(sender, label, failure, config)) {
                 sender.sendMessage(line);
             }
         }
@@ -83,12 +83,12 @@ public class BukkitCommands {
         return Command.tabComplete(args, command);
     }
 
-    static <A> List<String> getCommandUsages(Function<CommandHelp, String> formatter, String label, String[] args, int position, Command<A> cmd) {
+    static <A> List<String> getCommandUsages(CommandSender sender, String label, String[] args, int position, Command<A> cmd, Function<BukkitCommandHelp, String> formatter) {
         String[] succArgs = args.length >= 1
                 ? Arrays.copyOfRange(args, 0, position)
                 : new String[0];
         return Command.getEntries(cmd).stream()
-                .map(pair -> {
+                .flatMap(pair -> {
                     List<String> usageArgs = pair.getKey().stream()
                             .flatMap(s -> Stream.concat(
                                     Arrays.stream(succArgs),
@@ -96,20 +96,21 @@ public class BukkitCommands {
                             ))
                             .collect(Collectors.toList());
                     CommandSpec spec = Command.getSpec(pair.getValue());
-                    return formatter.apply(CommandHelp.of(label, usageArgs, spec));
+                    String line = formatter.apply(BukkitCommandHelp.of(sender, label, usageArgs, spec));
+                    return line.isEmpty() ? Stream.empty() : Stream.of(line);
                 })
                 .collect(Collectors.toList());
     }
 
-    private static <A> List<String> getFailureMessage(CommandConfig config, String label, CommandFailure<A> failure) {
+    private static <A> List<String> getFailureMessage(CommandSender sender, String label, CommandFailure<A> failure, BukkitCommandConfig config) {
         if (failure instanceof CommandFailure.FewArguments) {
             CommandFailure.FewArguments<A> fewArgs = (CommandFailure.FewArguments<A>) failure;
-            return getCommandUsages(config.getFormatter(), label, fewArgs.getArguments(), fewArgs.getIndex(), fewArgs.getCommand());
+            return getCommandUsages(sender, label, fewArgs.getArguments(), fewArgs.getIndex(), fewArgs.getCommand(), config.getFormatter());
         } else if (failure instanceof CommandFailure.UnknownSubCommand) {
             CommandFailure.UnknownSubCommand<A> unknown = (CommandFailure.UnknownSubCommand<A>) failure;
             String input = unknown.getArguments()[unknown.getIndex()];
             List<String> usages = new ArrayList<>(getCommandUsages(
-                    config.getFormatter(), label, unknown.getArguments(), unknown.getIndex(), unknown.getCommand()
+                    sender, label, unknown.getArguments(), unknown.getIndex(), unknown.getCommand(), config.getFormatter()
             ));
             usages.add(String.format("Command '%s' doesn't exists!", input));
             return usages;
@@ -118,14 +119,14 @@ public class BukkitCommands {
     }
 
     private static class PluginTabExecutor<A> implements CommandExecutor, TabCompleter, PluginIdentifiableCommand {
-        private final CommandConfig config;
+        private final BukkitCommandConfig config;
         private final Command<A> command;
         private final String commandName;
         private final Plugin plugin;
         private final BiConsumer<CommandSender, A> executor;
         private final BiFunction<CommandSender, A, List<String>> tabCompleter;
 
-        public PluginTabExecutor(CommandConfig config, Command<A> command, String commandName, Plugin plugin, BiConsumer<CommandSender, A> executor, BiFunction<CommandSender, A, List<String>> tabCompleter) {
+        public PluginTabExecutor(BukkitCommandConfig config, Command<A> command, String commandName, Plugin plugin, BiConsumer<CommandSender, A> executor, BiFunction<CommandSender, A, List<String>> tabCompleter) {
             this.config = config;
             this.command = command;
             this.commandName = commandName;
