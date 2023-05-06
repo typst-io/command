@@ -37,9 +37,9 @@ public class CommandTest {
         Assertions.assertEquals(
                 Arrays.asList(
                         "/mycmd a",
-                        "/mycmd b (string)",
-                        "/mycmd c (string) (int)",
-                        "/mycmd d (string) (int) - desc",
+                        "/mycmd b (문자열)",
+                        "/mycmd c (문자열) (정수)",
+                        "/mycmd d (문자열) (정수) - desc",
                         "/mycmd e a"
                 ),
                 msgs

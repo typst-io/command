@@ -1,7 +1,7 @@
 package io.typecraft.command.bukkit;
 
 import io.typecraft.command.Argument;
-import io.vavr.control.Try;
+import io.typecraft.command.algebra.Either;
 import lombok.experimental.UtilityClass;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -34,7 +34,7 @@ public class BukkitArguments {
     public static final Argument<Material> materialArg =
             Argument.ofUnary(
                     "material",
-                    s -> Try.of(() -> Material.valueOf(s)).toJavaOptional(),
+                    s -> Either.catching(() -> Material.valueOf(s)).toJavaOptional(),
                     () -> Arrays.stream(Material.values()).map(Material::name).collect(Collectors.toList())
             );
 

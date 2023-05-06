@@ -1,7 +1,7 @@
 package io.typecraft.command.bukkit;
 
 import io.typecraft.command.Converters;
-import io.vavr.Tuple2;
+import io.typecraft.command.algebra.Tuple2;
 import lombok.experimental.UtilityClass;
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -29,8 +29,8 @@ public class BukkitConverters {
         } else if (obj instanceof Map) {
             return Converters.toMapAs(
                     pair -> new Tuple2<>(
-                            pair._1,
-                            normalizeYamlObject(pair._2)
+                            pair.getA(),
+                            normalizeYamlObject(pair.getB())
                     ),
                     obj
             ).orElse(Collections.emptyMap());
@@ -44,8 +44,8 @@ public class BukkitConverters {
     public static Map<String, Object> normalizeYamlMap(Map<String, Object> map) {
         return Converters.toMapAs(
                 pair -> new Tuple2<>(
-                        pair._1.toString(),
-                        normalizeYamlObject(pair._2)
+                        pair.getA().toString(),
+                        normalizeYamlObject(pair.getB())
                 ),
                 map
         ).orElse(Collections.emptyMap());

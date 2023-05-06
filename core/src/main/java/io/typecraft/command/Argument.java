@@ -1,6 +1,6 @@
 package io.typecraft.command;
 
-import io.vavr.Tuple2;
+import io.typecraft.command.algebra.Tuple2;
 import lombok.Data;
 import lombok.With;
 
@@ -16,6 +16,8 @@ import java.util.function.Supplier;
 @With
 public class Argument<A> {
     private final List<String> names;
+    // args -> (result, remainingArgs)
+    // List<String> -> (Option<A>, List<String>)
     private final Function<List<String>, Tuple2<Optional<A>, List<String>>> parser;
     // TODO: Function<List<String>, Supplier<Collection<String>>>
     private final List<Supplier<List<String>>> tabCompleters;

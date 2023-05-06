@@ -1,7 +1,7 @@
 package io.typecraft.command;
 
 
-import io.vavr.control.Either;
+import io.typecraft.command.algebra.Either;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -111,7 +111,7 @@ public class CommandTest {
     public void unit() {
         String[] args = new String[0];
         assertEquals(
-                Either.left(new CommandFailure.FewArguments<>(args, 0, rootCommand)),
+                new Either.Left<>(new CommandFailure.FewArguments<>(args, 0, rootCommand)),
                 Command.parse(args, rootCommand)
         );
     }
@@ -120,7 +120,7 @@ public class CommandTest {
     public void sub() {
         String[] args = new String[]{"item"};
         assertEquals(
-                Either.left(new CommandFailure.FewArguments<>(args, 1, itemCommand)),
+                new Either.Left<>(new CommandFailure.FewArguments<>(args, 1, itemCommand)),
                 Command.parse(args, rootCommand)
         );
     }
@@ -129,7 +129,7 @@ public class CommandTest {
     public void subUnknown() {
         String[] args = new String[]{"item", "unknownCommand"};
         assertEquals(
-                Either.left(new CommandFailure.UnknownSubCommand<>(args, 1, itemCommand)),
+                new Either.Left<>(new CommandFailure.UnknownSubCommand<>(args, 1, itemCommand)),
                 Command.parse(args, rootCommand)
         );
     }
@@ -138,7 +138,7 @@ public class CommandTest {
     public void present() {
         String[] args = new String[]{"item", "open"};
         assertEquals(
-                Either.right(new CommandSuccess<>(args, 2, new OpenItemList())),
+                new Either.Right<>(new CommandSuccess<>(args, 2, new OpenItemList())),
                 Command.parse(args, rootCommand)
         );
     }
@@ -149,7 +149,7 @@ public class CommandTest {
         String name = "someName";
         String[] args = new String[]{"item", "add", String.valueOf(index), name};
         assertEquals(
-                Either.right(new CommandSuccess<>(args, args.length, new AddItem(index, name))),
+                new Either.Right<>(new CommandSuccess<>(args, args.length, new AddItem(index, name))),
                 Command.parse(args, rootCommand)
         );
     }
@@ -158,7 +158,9 @@ public class CommandTest {
     public void help() {
         String[] args = new String[]{"item", "a"};
         Either<CommandFailure<MyCommand>, CommandSuccess<MyCommand>> result = Command.parse(args, rootCommand);
-        CommandFailure<MyCommand> failure = result.getLeft();
+        CommandFailure<MyCommand> failure = result instanceof Either.Left
+                ? ((Either.Left<CommandFailure<MyCommand>, CommandSuccess<MyCommand>>) result).getLeft()
+                 : null;
         if (failure instanceof CommandFailure.FewArguments) {
             CommandFailure.FewArguments<MyCommand> fewArgs = (CommandFailure.FewArguments<MyCommand>) failure;
             helpCommand(fewArgs.getArguments(), fewArgs.getIndex(), fewArgs.getCommand());
@@ -195,7 +197,7 @@ public class CommandTest {
                         pair("item", itemCommandWithFallback)
                 ));
         assertEquals(
-                Either.right(new CommandSuccess<>(args, 2, new FallbackItem())),
+                new Either.Right<>(new CommandSuccess<>(args, 2, new FallbackItem())),
                 result
         );
     }

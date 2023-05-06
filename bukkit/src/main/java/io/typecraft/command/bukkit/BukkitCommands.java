@@ -2,7 +2,7 @@ package io.typecraft.command.bukkit;
 
 import io.typecraft.command.Command;
 import io.typecraft.command.*;
-import io.vavr.control.Either;
+import io.typecraft.command.algebra.Either;
 import lombok.experimental.UtilityClass;
 import org.bukkit.command.*;
 import org.bukkit.plugin.Plugin;
@@ -67,11 +67,11 @@ public class BukkitCommands {
 
     public static <A> Optional<CommandSuccess<A>> execute(CommandSender sender, String label, String[] args, Command<A> command, BukkitCommandConfig config) {
         Either<CommandFailure<A>, CommandSuccess<A>> result = Command.parse(args, command);
-        if (result.isRight()) {
-            CommandSuccess<A> success = result.get();
+        if (result instanceof Either.Right) {
+            CommandSuccess<A> success = ((Either.Right<CommandFailure<A>, CommandSuccess<A>>) result).getRight();
             return Optional.of(success);
-        } else if (result.isLeft()) {
-            CommandFailure<A> failure = result.getLeft();
+        } else if (result instanceof Either.Left) {
+            CommandFailure<A> failure = ((Either.Left<CommandFailure<A>, CommandSuccess<A>>) result).getLeft();
             for (String line : getFailureMessage(sender, label, failure, config)) {
                 sender.sendMessage(line);
             }

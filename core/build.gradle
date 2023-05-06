@@ -12,7 +12,6 @@ repositories {
 dependencies {
     compileOnly lombok()
     annotationProcessor lombok()
-    api('io.vavr:vavr:0.10.4')
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
     testCompileOnly lombok()
@@ -24,3 +23,75 @@ test {
 }
 
 registerPublish()
+
+tasks.register('generateFunctions') {
+    doLast {
+        for (int arity = 3; arity < 9; arity++) {
+            def file = new File(temporaryDir, "Function${arity}.java")
+            def alphabets = (0..<arity).collect {
+                int ascii = 'A'
+                char ch = ascii + it
+                ch
+            }
+            def paramDefs = alphabets.collect {
+                "${it} ${Character.toLowerCase(it)}"
+            }
+            file.text = """// This is an auto-generated code by the Gradle task 'generateTuples' in the project 'command-core'.
+package io.typecraft.command.function;
+
+public interface Function${arity}<${alphabets.join(", ")}, R> {
+    R apply(${paramDefs.join(", ")});
+}
+"""
+        }
+    }
+}
+
+tasks.register('generateTuples') {
+    doLast {
+        for (int arity = 1; arity < 9; arity++) {
+            // file path = project.buildDir/tmp/taskName/TupleN.java
+            def file = new File(temporaryDir, "Tuple${arity}.java")
+            def alphabets = (0..<arity).collect {
+                int ascii = 'A'
+                char ch = ascii + it
+                ch
+            }
+            def fields = alphabets.collect {
+                "    $it ${Character.toLowerCase(it)};"
+            }.join("\n")
+            def functions = (0..<arity).collect {
+                def ch = alphabets[it]
+                def params = alphabets.collect { "get${it}()" }
+                def funcTypeParams = alphabets.toList()
+                funcTypeParams[it] = 'T' as Character
+                params[it] = "f.apply(${params[it]})"
+                "    public <T> Tuple${arity}<${funcTypeParams.join(", ")}> map${it + 1}(Function<? super ${ch}, ? extends T> f) {\n" +
+                        "        return new Tuple${arity}<>(${params.join(", ")});\n" +
+                        "    }"
+            }.join("\n\n")
+            file.text =
+                    """// This is an auto-generated code by the Gradle task 'generateTuples' in the project 'command-core'.
+package io.typecraft.command.algebra;
+
+import lombok.Value;
+import lombok.With;
+
+import java.util.function.Function;
+
+@Value
+@With
+public class Tuple${arity}<${alphabets.join(", ")}> implements Tuple {
+${fields}
+
+${functions}
+
+    @Override
+    public int arity() {
+        return ${arity};
+    }
+}
+"""
+        }
+    }
+}
