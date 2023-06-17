@@ -1,3 +1,3 @@
-package io.typecraft.command.scalar
+package io.typecraft.command.scala
 
 object implicits extends ScalaCommand

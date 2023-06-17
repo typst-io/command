@@ -1,4 +1,4 @@
-package io.typecraft.command.scalar
+package io.typecraft.command.scala
 
 import io.typecraft.command.Command.{Mapping, Parser}
 import io.typecraft.command.{Argument, Command, StandardArguments, algebra}
