@@ -4,6 +4,7 @@ import io.typecraft.command.Command.{Mapping, Parser}
 import io.typecraft.command.{Argument, Command, StandardArguments, algebra}
 
 import java.util.{Collections, Optional}
+import scala.jdk.CollectionConverters.ListHasAsScala
 import scala.jdk.OptionConverters.RichOption
 
 trait ScalaCommand {
@@ -15,7 +16,7 @@ trait ScalaCommand {
   implicit val boolArg: Argument[Boolean] = Argument.ofUnary("bool", (s: String) => s.toBooleanOption.toJava, () => Collections.emptyList())
   implicit val strsArg: Argument[Seq[String]] = Argument.of(
     Collections.singletonList("strings"),
-    (args: java.util.List[String]) => new algebra.Tuple2(Optional.of(args), Collections.emptyList()),
+    (args: java.util.List[String]) => new algebra.Tuple2(Optional.of(args.asScala.toSeq), Collections.emptyList()),
     Collections.emptyList()
   )
 }
