@@ -26,6 +26,9 @@ object ScalaCommand extends ScalaCommand {
 
   def mapping[A](pairs: (String, Command[_ <: A])*): Mapping[A] = {
     val tcPairs: Array[io.typecraft.command.algebra.Tuple2[String, Command[_ <: A]]] = Array.fill(pairs.size)(null)
+    for ((pair, i) <- pairs.zipWithIndex) {
+      tcPairs.update(i, new algebra.Tuple2(pair._1, pair._2))
+    }
     Command.mapping(tcPairs: _*)
   }
 
