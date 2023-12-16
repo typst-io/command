@@ -1,13 +1,15 @@
 package io.typecraft.command;
 
 import lombok.Data;
+import lombok.Value;
 import lombok.With;
 
 import java.util.function.Function;
 
-@Data(staticConstructor = "of")
+@Value(staticConstructor = "of")
 @With
 public class CommandConfig {
-    private final Function<CommandHelp, String> formatter;
-    public static final CommandConfig empty = new CommandConfig(CommandHelp::format);
+    Function<CommandHelp, String> formatter;
+    boolean hideNoPermissionCommands;
+    public static final CommandConfig empty = new CommandConfig(CommandHelp::format, true);
 }

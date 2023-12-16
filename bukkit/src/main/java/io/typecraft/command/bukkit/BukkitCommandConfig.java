@@ -10,9 +10,10 @@ import java.util.function.Function;
 @With
 public class BukkitCommandConfig {
     Function<BukkitCommandHelp, String> formatter;
-    public static final BukkitCommandConfig empty = new BukkitCommandConfig(BukkitCommandHelp::format);
+    boolean hideNoPermissionCommands;
+    public static final BukkitCommandConfig empty = new BukkitCommandConfig(BukkitCommandHelp::format, true);
 
     public static BukkitCommandConfig from(CommandConfig config) {
-        return new BukkitCommandConfig(help -> config.getFormatter().apply(help.toHelp()));
+        return new BukkitCommandConfig(help -> config.getFormatter().apply(help.toHelp()), config.isHideNoPermissionCommands());
     }
 }

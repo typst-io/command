@@ -16,12 +16,14 @@ public class BukkitCommandHelp {
     String label;
     List<String> arguments;
     CommandSpec spec;
+    String language; //  en, ko
 
     public CommandHelp toHelp() {
         return CommandHelp.of(
                 getLabel(),
                 getArguments(),
-                getSpec()
+                getSpec(),
+                getLanguage()
         );
     }
 
@@ -30,9 +32,11 @@ public class BukkitCommandHelp {
         String permission = spec.getPermission();
         // check permission
         if (permission.isEmpty() || help.getSender().hasPermission(permission)) {
-            CommandSpec newSpec = spec.withArguments(spec.getArguments().stream()
+            CommandSpec newSpec = help.getLanguage().equalsIgnoreCase("ko_kr")
+                    ? spec.withArguments(spec.getArguments().stream()
                     .map(BukkitCommandHelp::translateToKor)
-                    .collect(Collectors.toList()));
+                    .collect(Collectors.toList()))
+                    : spec;
             return CommandHelp.format(help.toHelp().withSpec(newSpec));
         }
         return "";

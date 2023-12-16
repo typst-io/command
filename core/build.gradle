@@ -18,6 +18,10 @@ dependencies {
     testAnnotationProcessor lombok()
 }
 
+java {
+    toolchain.setLanguageVersion(JavaLanguageVersion.of(8))
+}
+
 test {
     useJUnitPlatform()
 }

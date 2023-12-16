@@ -5,6 +5,7 @@ import io.typecraft.command.*;
 import io.typecraft.command.algebra.Either;
 import lombok.experimental.UtilityClass;
 import org.bukkit.command.*;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -83,20 +84,28 @@ public class BukkitCommands {
         return Command.tabComplete(args, command);
     }
 
-    static <A> List<String> getCommandUsages(CommandSender sender, String label, String[] args, int position, Command<A> cmd, Function<BukkitCommandHelp, String> formatter) {
+    static <A> List<String> getCommandUsages(CommandSender sender, String label, String[] args, int position, Command<A> cmd, BukkitCommandConfig config) {
+        Player player = sender instanceof Player ? ((Player) sender) : null;
+        String locale = player != null ? player.getLocale() : Locale.getDefault().getLanguage().split("_")[0].toLowerCase();
+        Function<BukkitCommandHelp, String> formatter = config.getFormatter();
         String[] succArgs = args.length >= 1
                 ? Arrays.copyOfRange(args, 0, position)
                 : new String[0];
         return Command.getEntries(cmd).stream()
                 .flatMap(pair -> {
+                    CommandSpec spec = Command.getSpec(pair.getValue());
+                    String perm = spec.getPermission();
+                    // skip if the config option is true, and the player has no permission
+                    if (config.isHideNoPermissionCommands() && !perm.isEmpty() && !sender.hasPermission(perm)) {
+                        return Stream.empty();
+                    }
                     List<String> usageArgs = pair.getKey().stream()
                             .flatMap(s -> Stream.concat(
                                     Arrays.stream(succArgs),
                                     Stream.of(s)
                             ))
                             .collect(Collectors.toList());
-                    CommandSpec spec = Command.getSpec(pair.getValue());
-                    String line = formatter.apply(BukkitCommandHelp.of(sender, label, usageArgs, spec));
+                    String line = formatter.apply(BukkitCommandHelp.of(sender, label, usageArgs, spec, locale));
                     return line.isEmpty() ? Stream.empty() : Stream.of(line);
                 })
                 .collect(Collectors.toList());
@@ -105,12 +114,12 @@ public class BukkitCommands {
     private static <A> List<String> getFailureMessage(CommandSender sender, String label, CommandFailure<A> failure, BukkitCommandConfig config) {
         if (failure instanceof CommandFailure.FewArguments) {
             CommandFailure.FewArguments<A> fewArgs = (CommandFailure.FewArguments<A>) failure;
-            return getCommandUsages(sender, label, fewArgs.getArguments(), fewArgs.getIndex(), fewArgs.getCommand(), config.getFormatter());
+            return getCommandUsages(sender, label, fewArgs.getArguments(), fewArgs.getIndex(), fewArgs.getCommand(), config);
         } else if (failure instanceof CommandFailure.UnknownSubCommand) {
             CommandFailure.UnknownSubCommand<A> unknown = (CommandFailure.UnknownSubCommand<A>) failure;
             String input = unknown.getArguments()[unknown.getIndex()];
             List<String> usages = new ArrayList<>(getCommandUsages(
-                    sender, label, unknown.getArguments(), unknown.getIndex(), unknown.getCommand(), config.getFormatter()
+                    sender, label, unknown.getArguments(), unknown.getIndex(), unknown.getCommand(), config
             ));
             usages.add(String.format("Command '%s' doesn't exists!", input));
             return usages;
@@ -137,8 +146,12 @@ public class BukkitCommands {
 
         @Override
         public boolean onCommand(@NotNull CommandSender sender, @NotNull org.bukkit.command.Command cmd, @NotNull String label, @NotNull String[] args) {
-            execute(sender, label, args, command, config)
-                    .ifPresent(succ -> executor.accept(sender, succ.getCommand()));
+            try {
+                execute(sender, label, args, command, config)
+                        .ifPresent(succ -> executor.accept(sender, succ.getCommand()));
+            } catch (CommandCancellationException ex) {
+                sender.sendMessage(ex.getMessage());
+            }
             return true;
         }
 

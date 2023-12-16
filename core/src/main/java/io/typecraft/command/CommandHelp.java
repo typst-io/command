@@ -1,27 +1,38 @@
 package io.typecraft.command;
 
-import lombok.Data;
+import lombok.Value;
 import lombok.With;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Data(staticConstructor = "of")
+@Value(staticConstructor = "of")
 @With
 public class CommandHelp {
-    private final String label;
-    private final List<String> arguments;
-    private final CommandSpec spec;
+    String label;
+    List<String> arguments;
+    CommandSpec spec;
+    String language;
+
 
     public static String format(CommandHelp help) {
         String label = help.getLabel();
         CommandSpec spec = help.getSpec();
         List<String> args = help.getArguments();
-        String argSuffix = spec.getArguments().stream().anyMatch(id -> !id.isEmpty())
-                ? " §e" + spec.getArguments().stream()
-                .map(s -> String.format("(%s)", translateToKor(s)))
-                .collect(Collectors.joining(" "))
-                : "";
+        String argSuffix;
+        if (help.getLanguage().equals("ko")) {
+            argSuffix = spec.getArguments().stream().anyMatch(name -> !name.isEmpty())
+                    ? " §e" + spec.getArguments().stream()
+                    .map(s -> String.format("(%s)", translateToKor(s)))
+                    .collect(Collectors.joining(" "))
+                    : "";
+        } else {
+            argSuffix = spec.getArguments().stream().anyMatch(name -> !name.isEmpty())
+                    ? " §e" + spec.getArguments().stream()
+                    .map(s -> String.format("(%s)", s))
+                    .collect(Collectors.joining(" "))
+                    : "";
+        }
         String description = spec.getDescription();
         String descSuffix = description.isEmpty()
                 ? ""

@@ -1,0 +1,21 @@
+plugins {
+    id 'java-library'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.21'
+    id 'maven-publish'
+    id 'signing'
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_1_8
+}
+
+dependencies {
+    api project(':command-core')
+}
+
+registerPublish(this)

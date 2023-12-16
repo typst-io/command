@@ -18,7 +18,7 @@ public class CommandTest {
     @Test
     public void help() {
         List<String> msgs = BukkitCommands.getCommandUsages(
-                new MockSender(),
+                new MockPlayer(new MockSender(), "ko"),
                 "mycmd",
                 new String[0],
                 1,
@@ -32,7 +32,7 @@ public class CommandTest {
                         )),
                         pair("f", Command.argument((a, b) -> null, strArg, intArg).withDescription("desc").withPermission("test.permission"))
                 ),
-                BukkitCommandHelp::format
+                BukkitCommandConfig.empty
         ).stream().map(ChatColor::stripColor).collect(Collectors.toList());
         Assertions.assertEquals(
                 Arrays.asList(

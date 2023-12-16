@@ -1,6 +1,6 @@
 rootProject.name = 'command'
 
-include('core', 'bukkit', 'scala')
+include('core', 'bukkit', 'scala', 'kotlin')
 
 rootProject.children.forEach { project ->
     project.name = "command-${project.name}"

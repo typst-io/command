@@ -24,6 +24,10 @@ test {
     useJUnitPlatform()
 }
 
+java {
+    toolchain.setLanguageVersion(JavaLanguageVersion.of(8))
+}
+
 spigot {
     name 'BukkitCommand'
     commands {
