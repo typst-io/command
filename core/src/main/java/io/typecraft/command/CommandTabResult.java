@@ -1,35 +1,20 @@
 package io.typecraft.command;
 
+import io.typecraft.command.algebra.Tuple2;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CommandTabResult<A> {
-    static <A> CommandTabResult<A> suggestion(List<String> suggestions) {
-        return new Suggestion<>(suggestions);
-    }
-
-    static <A> Present<A> present(String[] arguments, A a) {
-        return new Present<>(arguments, a);
-    }
-
     @Data
-    class Suggestion<A> implements CommandTabResult<A> {
-        private final List<String> suggestions;
-
-        private Suggestion(List<String> suggestions) {
-            this.suggestions = suggestions;
-        }
+    class Suggestions<A> implements CommandTabResult<A> {
+        private final List<Tuple2<String, Optional<Command<A>>>> suggestions;
     }
 
     @Data
     class Present<A> implements CommandTabResult<A> {
         private final String[] arguments;
         private final A command;
-
-        private Present(String[] arguments, A command) {
-            this.arguments = arguments;
-            this.command = command;
-        }
     }
 }

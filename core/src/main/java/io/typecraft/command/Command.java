@@ -8,7 +8,6 @@ import io.typecraft.command.function.*;
 import io.typecraft.command.product.ArgumentProduct;
 import lombok.Data;
 import lombok.With;
-import lombok.experimental.ExtensionMethod;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractMap.SimpleEntry;
@@ -182,7 +181,7 @@ public interface Command<A> {
             A a = aO.getOrNull();
             int currentIndex = index + list.size() - remainList.size();
             return aO.isDefined()
-                    ? new Either.Right<>(new CommandSuccess<>(args, currentIndex, a))
+                    ? new Either.Right<>(new CommandSuccess<>(args, currentIndex, a, parser))
                     : new Either.Left<>(new CommandFailure.ParsingFailure<>(parser.getNames(), parser));
         }
         throw new UnsupportedOperationException();
@@ -198,16 +197,17 @@ public interface Command<A> {
             Mapping<A> mapCommand = (Mapping<A>) command;
             // if tail
             if (index >= args.length - 1) {
-                return CommandTabResult.suggestion(
-                        mapCommand.getCommandMap().keySet().stream()
-                                .filter(key -> key.toLowerCase().startsWith(argument))
+                return new CommandTabResult.Suggestions<>(
+                        mapCommand.getCommandMap().entrySet().stream()
+                                .filter(pair -> pair.getKey().toLowerCase().startsWith(argument))
+                                .map(pair -> new Tuple2<>(pair.getKey(), Optional.of(pair.getValue())))
                                 .collect(Collectors.toList())
                 );
             } else {
                 Command<A> subCommand = mapCommand.getCommandMap().get(argument);
                 return subCommand != null
                         ? tabCompleteWithIndex(index + 1, args, subCommand)
-                        : CommandTabResult.suggestion(Collections.emptyList());
+                        : new CommandTabResult.Suggestions<>(Collections.emptyList());
             }
         } else if (command instanceof Parser) {
             Parser<A> parser = (Parser<A>) command;
@@ -218,14 +218,15 @@ public interface Command<A> {
                     ? tabCompleters.get(pos)
                     : null;
             String lowerArgument = lastArgument.toLowerCase();
-            List<String> tabComplete = tabCompleter != null
+            List<Tuple2<String, Optional<Command<A>>>> tabComplete = tabCompleter != null
                     ? tabCompleter.get().stream()
                     .filter(s -> s.toLowerCase().startsWith(lowerArgument))
+                    .map(s -> new Tuple2<>(s, Optional.<Command<A>>empty()))
                     .collect(Collectors.toList())
                     : Collections.emptyList();
-            return CommandTabResult.suggestion(tabComplete);
+            return new CommandTabResult.Suggestions<>(tabComplete);
         }
-        return CommandTabResult.suggestion(Collections.emptyList());
+        return new CommandTabResult.Suggestions<>(Collections.emptyList());
     }
 
     static <A> List<Entry<List<String>, Command<A>>> getEntries(Command<A> cmd) {
@@ -248,17 +249,5 @@ public interface Command<A> {
                     .collect(Collectors.toList());
         }
         return Collections.emptyList();
-    }
-
-    static <A> CommandSpec getSpec(Command<A> cmd) {
-        if (cmd instanceof Command.Parser) {
-            Parser<A> parser = (Parser<A>) cmd;
-            return CommandSpec.of(
-                    parser.getNames(),
-                    parser.getDescription(),
-                    parser.getPermission()
-            );
-        }
-        return CommandSpec.empty;
     }
 }

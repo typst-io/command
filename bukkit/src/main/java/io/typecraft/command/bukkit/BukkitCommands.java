@@ -18,6 +18,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.typecraft.command.bukkit.BukkitControlFlows.tryAccessPermission;
+
 @UtilityClass
 public class BukkitCommands {
     /**
@@ -65,11 +67,11 @@ public class BukkitCommands {
         pluginCmd.setTabCompleter(pluginTabExecutor);
     }
 
-
     public static <A> Optional<CommandSuccess<A>> execute(CommandSender sender, String label, String[] args, Command<A> command, BukkitCommandConfig config) {
         Either<CommandFailure<A>, CommandSuccess<A>> result = Command.parse(args, command);
         if (result instanceof Either.Right) {
             CommandSuccess<A> success = ((Either.Right<CommandFailure<A>, CommandSuccess<A>>) result).getRight();
+            tryAccessPermission(success.getNode(), sender);
             return Optional.of(success);
         } else if (result instanceof Either.Left) {
             CommandFailure<A> failure = ((Either.Left<CommandFailure<A>, CommandSuccess<A>>) result).getLeft();
@@ -93,7 +95,7 @@ public class BukkitCommands {
                 : new String[0];
         return Command.getEntries(cmd).stream()
                 .flatMap(pair -> {
-                    CommandSpec spec = Command.getSpec(pair.getValue());
+                    CommandSpec spec = CommandSpec.from(pair.getValue());
                     String perm = spec.getPermission();
                     // skip if the config option is true, and the player has no permission
                     if (config.isHideNoPermissionCommands() && !perm.isEmpty() && !sender.hasPermission(perm)) {
@@ -159,8 +161,19 @@ public class BukkitCommands {
         @Override
         public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull org.bukkit.command.Command cmd, @NotNull String alias, @NotNull String[] args) {
             CommandTabResult<A> result = tabComplete(args, command);
-            if (result instanceof CommandTabResult.Suggestion) {
-                return ((CommandTabResult.Suggestion<A>) result).getSuggestions();
+            if (result instanceof CommandTabResult.Suggestions) {
+                CommandTabResult.Suggestions<A> suggestions = (CommandTabResult.Suggestions<A>) result;
+                return suggestions.getSuggestions().stream()
+                        .flatMap(pair -> {
+                            String suggestion = pair.getA();
+                            Command<A> command = pair.getB().orElse(null);
+                            CommandSpec spec = command != null ? CommandSpec.from(command) : CommandSpec.empty;
+                            String perm = spec.getPermission();
+                            return perm.isEmpty() || sender.hasPermission(perm)
+                                    ? Stream.of(suggestion)
+                                    : Stream.empty();
+                        })
+                        .collect(Collectors.toList());
             } else if (result instanceof CommandTabResult.Present) {
                 A value = ((CommandTabResult.Present<A>) result).getCommand();
                 return tabCompleter.apply(sender, value);
