@@ -41,7 +41,7 @@ tasks.register('generateFunctions') {
                 "${it} ${Character.toLowerCase(it)}"
             }
             file.text = """// This is an auto-generated code by the Gradle task 'generateTuples' in the project 'command-core'.
-package io.typecraft.command.function;
+package io.typst.command.function;
 
 public interface Function${arity}<${alphabets.join(", ")}, R> {
     R apply(${paramDefs.join(", ")});
@@ -76,7 +76,7 @@ tasks.register('generateTuples') {
             }.join("\n\n")
             file.text =
                     """// This is an auto-generated code by the Gradle task 'generateTuples' in the project 'command-core'.
-package io.typecraft.command.algebra;
+package io.typst.command.algebra;
 
 import lombok.Value;
 import lombok.With;
