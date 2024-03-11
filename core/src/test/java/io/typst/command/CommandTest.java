@@ -23,7 +23,8 @@ public class CommandTest {
                     pair("add", Command.argument(AddItem::new, StandardArguments.intArg, StandardArguments.strArg)),
                     pair("remove", Command.argument(RemoveItem::new, StandardArguments.intArg)),
                     pair("page", Command.argument(PageItem::new, intTabArg, intTabArg2)),
-                    pair("lazy", Command.present(new AddItem(0, null)))
+                    pair("lazy", Command.present(new AddItem(0, null))),
+                    pair("camelPage", Command.argument(PageItem::new, intTabArg, intTabArg2))
             );
     private static final Command.Mapping<MyCommand> itemCommandWithFallback =
             itemCommand.withFallback(Command.present(new FallbackItem()));
@@ -264,6 +265,16 @@ public class CommandTest {
                         it -> pair(it, Optional.<Command<MyCommand>>empty())
                 ).collect(Collectors.toList())),
                 Command.tabComplete(new String[]{"item", "page", "10", "3"}, rootCommand)
+        );
+    }
+
+    @Test
+    public void tabUpperCase() {
+        assertEquals(
+                new CommandTabResult.Suggestions<>(Stream.of("30", "40").map(
+                        it -> pair(it, Optional.<Command<MyCommand>>empty())
+                ).collect(Collectors.toList())),
+                Command.tabComplete(new String[]{"item", "camelPage", "10", ""}, rootCommand)
         );
     }
 }

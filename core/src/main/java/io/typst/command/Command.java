@@ -6,7 +6,6 @@ import io.typst.command.algebra.Option;
 import io.typst.command.algebra.Tuple2;
 import io.typst.command.function.*;
 import io.typst.command.product.ArgumentProduct;
-import io.typst.command.function.*;
 import lombok.Data;
 import lombok.With;
 import org.jetbrains.annotations.Nullable;
@@ -193,19 +192,20 @@ public interface Command<A> {
     }
 
     static <A> CommandTabResult<A> tabCompleteWithIndex(int index, String[] args, Command<A> command) {
-        String argument = (args.length > index ? args[index] : "").toLowerCase();
+        String arg = args.length > index ? args[index] : "";
+        String arglc = arg.toLowerCase();
         if (command instanceof Command.Mapping) {
             Mapping<A> mapCommand = (Mapping<A>) command;
             // if tail
             if (index >= args.length - 1) {
                 return new CommandTabResult.Suggestions<>(
                         mapCommand.getCommandMap().entrySet().stream()
-                                .filter(pair -> pair.getKey().toLowerCase().startsWith(argument))
+                                .filter(pair -> pair.getKey().toLowerCase().startsWith(arglc))
                                 .map(pair -> new Tuple2<>(pair.getKey(), Optional.of(pair.getValue())))
                                 .collect(Collectors.toList())
                 );
             } else {
-                Command<A> subCommand = mapCommand.getCommandMap().get(argument);
+                Command<A> subCommand = mapCommand.getCommandMap().get(arg);
                 return subCommand != null
                         ? tabCompleteWithIndex(index + 1, args, subCommand)
                         : new CommandTabResult.Suggestions<>(Collections.emptyList());
