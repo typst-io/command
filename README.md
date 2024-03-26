@@ -12,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.typst:command-bukkit:0.8.0'
+    implementation 'io.typst:command-bukkit:2.1.0'
 }
 ```
 
