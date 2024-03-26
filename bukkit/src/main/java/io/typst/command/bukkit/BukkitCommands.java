@@ -1,8 +1,7 @@
 package io.typst.command.bukkit;
 
-import io.typst.command.*;
-import io.typst.command.*;
 import io.typst.command.Command;
+import io.typst.command.*;
 import io.typst.command.algebra.Either;
 import lombok.experimental.UtilityClass;
 import org.bukkit.command.*;
@@ -70,7 +69,7 @@ public class BukkitCommands {
         Either<CommandFailure<A>, CommandSuccess<A>> result = Command.parse(args, command);
         if (result instanceof Either.Right) {
             CommandSuccess<A> success = ((Either.Right<CommandFailure<A>, CommandSuccess<A>>) result).getRight();
-            BukkitControlFlows.tryAccessPermission(success.getNode(), sender);
+            BukkitControlFlows.validatePermission(success.getNode(), sender);
             return Optional.of(success);
         } else if (result instanceof Either.Left) {
             CommandFailure<A> failure = ((Either.Left<CommandFailure<A>, CommandSuccess<A>>) result).getLeft();
@@ -85,6 +84,33 @@ public class BukkitCommands {
         return Command.tabComplete(args, command);
     }
 
+    public static <A> List<String> tabComplete(CommandSender sender, String[] args, Command<A> cmd, BiFunction<CommandSender, A, List<String>> tabCompleter) {
+        CommandTabResult<A> result = tabComplete(args, cmd);
+        if (result instanceof CommandTabResult.Suggestions) {
+            CommandTabResult.Suggestions<A> suggestions = (CommandTabResult.Suggestions<A>) result;
+            return suggestions.getSuggestions().stream()
+                    .flatMap(pair -> {
+                        String suggestion = pair.getA();
+                        Command<A> command = pair.getB().orElse(null);
+                        CommandSpec spec = command != null ? CommandSpec.from(command) : CommandSpec.empty;
+                        String perm = spec.getPermission();
+                        return perm.isEmpty() || sender.hasPermission(perm)
+                                ? Stream.of(suggestion)
+                                : Stream.empty();
+                    })
+                    .collect(Collectors.toList());
+        } else if (result instanceof CommandTabResult.Present) {
+            A value = ((CommandTabResult.Present<A>) result).getCommand();
+            return tabCompleter.apply(sender, value);
+        }
+        return Collections.emptyList();
+    }
+
+    /**
+     * @param args     the input args
+     * @param position the last position that parsed successfully so that can be ignored
+     * @return usages
+     */
     static <A> List<String> getCommandUsages(CommandSender sender, String label, String[] args, int position, Command<A> cmd, BukkitCommandConfig config) {
         Player player = sender instanceof Player ? ((Player) sender) : null;
         String locale = player != null ? player.getLocale() : Locale.getDefault().getLanguage().split("_")[0].toLowerCase();
@@ -94,18 +120,21 @@ public class BukkitCommands {
                 : new String[0];
         return Command.getEntries(cmd).stream()
                 .flatMap(pair -> {
+                    List<String> theArgs = pair.getKey();
                     CommandSpec spec = CommandSpec.from(pair.getValue());
                     String perm = spec.getPermission();
                     // skip if the config option is true, and the player has no permission
                     if (config.isHideNoPermissionCommands() && !perm.isEmpty() && !sender.hasPermission(perm)) {
                         return Stream.empty();
                     }
-                    List<String> usageArgs = pair.getKey().stream()
+                    List<String> usageArgs = theArgs.size() >= 1
+                            ? theArgs.stream()
                             .flatMap(s -> Stream.concat(
                                     Arrays.stream(succArgs),
                                     Stream.of(s)
                             ))
-                            .collect(Collectors.toList());
+                            .collect(Collectors.toList())
+                            : Arrays.asList(succArgs);
                     String line = formatter.apply(BukkitCommandHelp.of(sender, label, usageArgs, spec, locale));
                     return line.isEmpty() ? Stream.empty() : Stream.of(line);
                 })
@@ -113,6 +142,7 @@ public class BukkitCommands {
     }
 
     private static <A> List<String> getFailureMessage(CommandSender sender, String label, CommandFailure<A> failure, BukkitCommandConfig config) {
+        String locale = BukkitControlFlows.getLocale(sender);
         if (failure instanceof CommandFailure.FewArguments) {
             CommandFailure.FewArguments<A> fewArgs = (CommandFailure.FewArguments<A>) failure;
             return getCommandUsages(sender, label, fewArgs.getArguments(), fewArgs.getIndex(), fewArgs.getCommand(), config);
@@ -122,10 +152,26 @@ public class BukkitCommands {
             List<String> usages = new ArrayList<>(getCommandUsages(
                     sender, label, unknown.getArguments(), unknown.getIndex(), unknown.getCommand(), config
             ));
-            usages.add(String.format("Command '%s' doesn't exists!", input));
+            if (locale.equals("ko")) {
+                usages.add(String.format("'%s' 명령어는 존재하지 않습니다!", input));
+            } else {
+                usages.add(String.format("Command '%s' doesn't exists!", input));
+            }
+            return usages;
+        } else if (failure instanceof CommandFailure.ParsingFailure) {
+            CommandFailure.ParsingFailure<A> parsingFailure = (CommandFailure.ParsingFailure<A>) failure;
+            List<String> usages = new ArrayList<>();
+            usages.addAll(getCommandUsages(sender, label, parsingFailure.getArguments(), parsingFailure.getIndex(), parsingFailure.getCommand(), config));
+            String message = locale.equals("ko")
+                    ? "잘못된 명령어입니다!"
+                    : "Wrong command!";
+            usages.add(message);
             return usages;
         }
-        return Collections.singletonList("Wrong command!");
+        String message = locale.equals("ko")
+                ? "잘못된 명령어입니다!"
+                : "Wrong command!";
+        return Collections.singletonList(message);
     }
 
     private static class PluginTabExecutor<A> implements CommandExecutor, TabCompleter, PluginIdentifiableCommand {
@@ -159,25 +205,7 @@ public class BukkitCommands {
         @Nullable
         @Override
         public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull org.bukkit.command.Command cmd, @NotNull String alias, @NotNull String[] args) {
-            CommandTabResult<A> result = tabComplete(args, command);
-            if (result instanceof CommandTabResult.Suggestions) {
-                CommandTabResult.Suggestions<A> suggestions = (CommandTabResult.Suggestions<A>) result;
-                return suggestions.getSuggestions().stream()
-                        .flatMap(pair -> {
-                            String suggestion = pair.getA();
-                            Command<A> command = pair.getB().orElse(null);
-                            CommandSpec spec = command != null ? CommandSpec.from(command) : CommandSpec.empty;
-                            String perm = spec.getPermission();
-                            return perm.isEmpty() || sender.hasPermission(perm)
-                                    ? Stream.of(suggestion)
-                                    : Stream.empty();
-                        })
-                        .collect(Collectors.toList());
-            } else if (result instanceof CommandTabResult.Present) {
-                A value = ((CommandTabResult.Present<A>) result).getCommand();
-                return tabCompleter.apply(sender, value);
-            }
-            return Collections.emptyList();
+            return tabComplete(sender, args, command, tabCompleter);
         }
 
         @NotNull

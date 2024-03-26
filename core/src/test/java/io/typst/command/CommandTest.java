@@ -15,17 +15,22 @@ public class CommandTest {
     private static final Argument<Integer> intTabArg = StandardArguments.intArg.withTabCompleter(() -> Arrays.asList("10", "20"));
     private static final Argument<Integer> intTabArg2 = StandardArguments.intArg.withTabCompleter(() -> Arrays.asList("30", "40"));
     // MyCommand = AddItem | RemoveItem | ...
-    private static final Command.Mapping<MyCommand> itemCommand =
-            Command.mapping(
-                    pair("open", Command.present(new OpenItemList()).withDescription("아이템 목록을 엽니다.")),
-                    // intArg: Argument<Integer>
-                    // strArg: Argument<String>
-                    pair("add", Command.argument(AddItem::new, StandardArguments.intArg, StandardArguments.strArg)),
-                    pair("remove", Command.argument(RemoveItem::new, StandardArguments.intArg)),
-                    pair("page", Command.argument(PageItem::new, intTabArg, intTabArg2)),
-                    pair("lazy", Command.present(new AddItem(0, null))),
-                    pair("camelPage", Command.argument(PageItem::new, intTabArg, intTabArg2))
-            );
+    private static final Command.Mapping<MyCommand> itemCommand;
+    private static final Command.Parser<MyCommand> pageCmd = Command.argument(PageItem::new, intTabArg, intTabArg2);
+
+    static {
+        itemCommand = Command.mapping(
+                pair("open", Command.present(new OpenItemList()).withDescription("아이템 목록을 엽니다.")),
+                // intArg: Argument<Integer>
+                // strArg: Argument<String>
+                pair("add", Command.argument(AddItem::new, StandardArguments.intArg, StandardArguments.strArg)),
+                pair("remove", Command.argument(RemoveItem::new, StandardArguments.intArg)),
+                pair("page", pageCmd),
+                pair("lazy", Command.present(new AddItem(0, null))),
+                pair("camelPage", pageCmd)
+        );
+    }
+
     private static final Command.Mapping<MyCommand> itemCommandWithFallback =
             itemCommand.withFallback(Command.present(new FallbackItem()));
     private static final Command<MyCommand> reloadCommand =
@@ -219,7 +224,7 @@ public class CommandTest {
         String[] args = new String[]{"item", ""};
         assertEquals(
                 new CommandTabResult.Suggestions<>(Stream.of(
-                        "open", "add", "remove", "page", "lazy"
+                        "open", "add", "remove", "page", "lazy", "camelPage"
                 ).map(it ->
                         pair(it, Optional.ofNullable(itemCommand.getCommandMap().get(it)))
                 ).collect(Collectors.toList())),
@@ -240,13 +245,13 @@ public class CommandTest {
     public void tabCustom() {
         assertEquals(
                 new CommandTabResult.Suggestions<>(Stream.of("10", "20").map(
-                        it -> pair(it, Optional.<Command<MyCommand>>empty())
+                        it -> pair(it, Optional.<Command<MyCommand>>of(pageCmd))
                 ).collect(Collectors.toList())),
                 Command.tabComplete(new String[]{"item", "page", ""}, rootCommand)
         );
         assertEquals(
                 new CommandTabResult.Suggestions<>(Stream.of("10").map(
-                        it -> pair(it, Optional.<Command<MyCommand>>empty())
+                        it -> pair(it, Optional.<Command<MyCommand>>of(pageCmd))
                 ).collect(Collectors.toList())),
                 Command.tabComplete(new String[]{"item", "page", "1"}, rootCommand)
         );
@@ -256,13 +261,13 @@ public class CommandTest {
     public void tabCustom2() {
         assertEquals(
                 new CommandTabResult.Suggestions<>(Stream.of("30", "40").map(
-                        it -> pair(it, Optional.<Command<MyCommand>>empty())
+                        it -> pair(it, Optional.<Command<MyCommand>>of(pageCmd))
                 ).collect(Collectors.toList())),
                 Command.tabComplete(new String[]{"item", "page", "10", ""}, rootCommand)
         );
         assertEquals(
                 new CommandTabResult.Suggestions<>(Stream.of("30").map(
-                        it -> pair(it, Optional.<Command<MyCommand>>empty())
+                        it -> pair(it, Optional.<Command<MyCommand>>of(pageCmd))
                 ).collect(Collectors.toList())),
                 Command.tabComplete(new String[]{"item", "page", "10", "3"}, rootCommand)
         );
@@ -272,7 +277,7 @@ public class CommandTest {
     public void tabUpperCase() {
         assertEquals(
                 new CommandTabResult.Suggestions<>(Stream.of("30", "40").map(
-                        it -> pair(it, Optional.<Command<MyCommand>>empty())
+                        it -> pair(it, Optional.<Command<MyCommand>>of(pageCmd))
                 ).collect(Collectors.toList())),
                 Command.tabComplete(new String[]{"item", "camelPage", "10", ""}, rootCommand)
         );

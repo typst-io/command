@@ -21,9 +21,82 @@ import java.util.stream.Stream;
 
 import static java.util.Collections.singletonList;
 
+/**
+ * This is a sum type to represent a command structure.
+ * <p>{@link Command} = {@link Mapping} or {@link Parser}</p>
+ *
+ * <p>Constructors: Command.mapping(), Command.argument()</p>
+ *
+ * <p>This commands:</p>
+ *
+ * <pre>
+ *     /label concrete &lt;string&gt;
+ *     /label map a
+ *     /label map b &lt;string&gt;
+ * </pre>
+ * <p>can be represented:</p>
+ * <pre>
+ *     {@code
+ *     interface MyCommand {
+ *         record Concrete(String s) implements MyCommand {}
+ *         class A implements MyCommand {}
+ *         record B(String s) implements MyCommand {}
+ *     }
+ *
+ *     Command.mapping(
+ *      pair("concrete", Command.argument(Concrete::new, strArg),
+ *      pair("map", Command.mapping(
+ *          pair("a", Command.argument(A::new),
+ *          pair("b", Command.argument(B::new, strArg)
+ *      )
+ *     )
+ *     }
+ * </pre>
+ *
+ * <pre>Please note that the MyCommand is a sum type in other word such an enum with their individual fields, also called sealed class in Kotlin.</pre>
+ *
+ * @param <A> The command of their business logic
+ * @see <a href="https://cguntur.me/2021/01/12/algebraic-in-java-part-1/">Algebraic - in Java?</a>
+ * @see Command.Mapping
+ * @see Command.Parser
+ */
 public interface Command<A> {
     <B> Command<B> map(Function<? super A, ? extends B> f);
 
+
+    /**
+     * Represents an abstract command with key-value pairs.
+     *
+     * <p>Constructor: Command.mapping(pairs)</p>
+     *
+     * <p>A handy constructor for pairs: Command.pair(a, b)</p>
+     *
+     * <p>This commands:</p>
+     *
+     * <pre>
+     * /label a
+     * /label b
+     * </pre>
+     * <p>
+     * can be represented:
+     *
+     * <pre>
+     *     {@code
+     *     enum MyCommand {
+     *         A, B
+     *     }
+     *
+     *     Command.mapping(
+     *      pair("a", Command.present { MyCommand.A }),
+     *      pair("b", Command.present { MyCommand.B }),
+     *     );
+     *     }
+     * </pre>
+     *
+     * @param <A> the command of their business logic
+     * @see Command.Parser
+     * @see Command
+     */
     @Data
     @With
     class Mapping<A> implements Command<A> {
@@ -50,6 +123,29 @@ public interface Command<A> {
         }
     }
 
+    /**
+     * Represents a concrete command with type-safe arguments.
+     *
+     * <p>This command:</p>
+     *
+     * <pre>
+     *     /label &lt;int&gt; &lt;string&gt;
+     * </pre>
+     * <p>
+     * can be represented:
+     *
+     * <pre>
+     *     {@code
+     *     record MyCommand(Integer a, String b)
+     *
+     *     Command.argument(MyCommand::new, intArg, strArg);
+     *     }
+     * </pre>
+     *
+     * @param <A> The command of their business logic
+     * @see Command.Mapping
+     * @see Command
+     */
     @Data
     @With
     class Parser<A> implements Command<A> {
@@ -182,7 +278,7 @@ public interface Command<A> {
             int currentIndex = index + list.size() - remainList.size();
             return aO.isDefined()
                     ? new Either.Right<>(new CommandSuccess<>(args, currentIndex, a, parser))
-                    : new Either.Left<>(new CommandFailure.ParsingFailure<>(parser.getNames(), parser));
+                    : new Either.Left<>(new CommandFailure.ParsingFailure<>(args, index, parser, parser.getNames()));
         }
         throw new UnsupportedOperationException();
     }
@@ -219,35 +315,73 @@ public interface Command<A> {
                     ? tabCompleters.get(pos)
                     : null;
             String lowerArgument = lastArgument.toLowerCase();
-            List<Tuple2<String, Optional<Command<A>>>> tabComplete = tabCompleter != null
+            List<Tuple2<String, Optional<Command<A>>>> tabCompletes = tabCompleter != null
                     ? tabCompleter.get().stream()
                     .filter(s -> s.toLowerCase().startsWith(lowerArgument))
-                    .map(s -> new Tuple2<>(s, Optional.<Command<A>>empty()))
+                    .map(s -> new Tuple2<>(s, Optional.of(command)))
                     .collect(Collectors.toList())
                     : Collections.emptyList();
-            return new CommandTabResult.Suggestions<>(tabComplete);
+            return new CommandTabResult.Suggestions<>(tabCompletes);
         }
         return new CommandTabResult.Suggestions<>(Collections.emptyList());
     }
 
+    /**
+     * Make flatten commands.
+     *
+     * <p>Example input:</p>
+     *
+     * <pre>
+     *     <code>{
+     *         a: {
+     *             a: cmdA,
+     *             b: cmdB
+     *         }
+     *     }</code>
+     * </pre>
+     *
+     * <p>result:</p>
+     *
+     * <pre>
+     *     <code>[
+     *      (["a", "a"], cmdA),
+     *      (["a", "b"], cmdB),
+     *      ...
+     *     ]</code>
+     * </pre>
+     *
+     * @param cmd the node
+     * @param <A> the command of their business logic
+     * @return flatten commands
+     */
     static <A> List<Entry<List<String>, Command<A>>> getEntries(Command<A> cmd) {
         if (cmd instanceof Command.Mapping) {
             Mapping<A> mapping = (Mapping<A>) cmd;
             return mapping.getCommandMap().entrySet().stream()
                     .flatMap(pair -> {
-                        List<Entry<List<String>, Command<A>>> subEntries = getEntries(pair.getValue());
+                        String key = pair.getKey();
+                        Command<A> subCmd = pair.getValue();
+                        List<Entry<List<String>, Command<A>>> subEntries = getEntries(subCmd);
                         return subEntries.size() >= 1
                                 ? subEntries.stream()
-                                .map(subPair -> new SimpleEntry<>(
-                                        Stream.concat(
-                                                Stream.of(pair.getKey()),
-                                                subPair.getKey().stream()
-                                        ).collect(Collectors.toList()),
-                                        subPair.getValue()
-                                ))
-                                : Stream.of(new SimpleEntry<>(singletonList(pair.getKey()), pair.getValue()));
+                                .map(subPair -> {
+                                    List<String> keys = new ArrayList<>();
+                                    keys.add(key);
+                                    keys.addAll(subPair.getKey());
+                                    return new SimpleEntry<>(
+                                            Stream.concat(
+                                                    Stream.of(key),
+                                                    subPair.getKey().stream()
+                                            ).collect(Collectors.toList()),
+                                            subPair.getValue()
+                                    );
+                                })
+                                : Stream.of(new SimpleEntry<>(singletonList(key), subCmd));
                     })
                     .collect(Collectors.toList());
+        } else if (cmd instanceof Command.Parser) {
+            Parser<A> parser = (Parser<A>) cmd;
+            return Collections.singletonList(new SimpleEntry<>(Collections.emptyList(), cmd));
         }
         return Collections.emptyList();
     }

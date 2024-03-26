@@ -1,5 +1,6 @@
 package io.typst.command.bukkit;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 import org.bukkit.permissions.Permission;
@@ -11,14 +12,26 @@ import java.util.Set;
 import java.util.UUID;
 
 public class MockSender implements CommandSender {
+    private final StringBuilder output;
+
+    public MockSender(StringBuilder output) {
+        this.output = output;
+    }
+
+    public StringBuilder getOutput() {
+        return output;
+    }
+
     @Override
     public void sendMessage(String message) {
-
+        output.append(ChatColor.stripColor(message)).append("\n");
     }
 
     @Override
     public void sendMessage(String[] messages) {
-
+        for (String message : messages) {
+            output.append(ChatColor.stripColor(message)).append("\n");
+        }
     }
 
     @Override
