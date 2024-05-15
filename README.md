@@ -1,5 +1,7 @@
 # Command
 
+![Maven Central Version](https://img.shields.io/maven-central/v/io.typst/command-bukkit)
+
 A pure, functional, typesafe command line parser.
 
 # Import
