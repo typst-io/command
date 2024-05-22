@@ -73,6 +73,7 @@ public class BukkitCommands {
             return Optional.of(success);
         } else if (result instanceof Either.Left) {
             CommandFailure<A> failure = ((Either.Left<CommandFailure<A>, CommandSuccess<A>>) result).getLeft();
+            sender.sendMessage(" ");
             for (String line : getFailureMessage(sender, label, failure, config)) {
                 sender.sendMessage(line);
             }

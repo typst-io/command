@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'io.typst:command-bukkit:2.1.0'
+    implementation 'io.typst:command-bukkit:2.1.1'
 }
 ```
 
@@ -24,7 +24,7 @@ dependencies {
 <dependency>
     <groupId>io.typst</groupId>
     <artifactId>command-bukkit</artifactId>
-    <version>0.8.0</version>
+    <version>2.1.1</version>
 </dependency>
 ```
 
