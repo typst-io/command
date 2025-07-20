@@ -9,7 +9,7 @@ import java.util.List;
 @Data(staticConstructor = "of")
 @With
 public class CommandSpec {
-    private final List<String> arguments;
+    private final List<Argument<?>> arguments;
     private final String description;
     private final String permission;
     public static final CommandSpec empty = new CommandSpec(Collections.emptyList(), "", "");
@@ -18,7 +18,7 @@ public class CommandSpec {
         if (node instanceof Command.Parser) {
             Command.Parser<?> parser = (Command.Parser<?>) node;
             return CommandSpec.of(
-                    parser.getNames(),
+                    parser.getArguments(),
                     parser.getDescription(),
                     parser.getPermission()
             );

@@ -1,7 +1,6 @@
 package io.typst.command;
 
 import io.typst.command.algebra.*;
-import io.typst.command.algebra.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -9,8 +8,7 @@ public class CommandArgumentTest {
     private <A extends Tuple> void assertNode(String[] args, A a, Command.Parser<A> node) {
         int arity = a.arity();
         Assertions.assertEquals(arity, args.length);
-        Assertions.assertEquals(arity, node.getNames().size());
-        Assertions.assertEquals(arity, node.getTabCompleters().size());
+        Assertions.assertEquals(arity, node.getArguments().size());
         Assertions.assertEquals(
                 new Either.Right<>(new CommandSuccess<>(args, arity, a, node)),
                 Command.parse(

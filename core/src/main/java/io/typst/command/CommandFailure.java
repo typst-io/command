@@ -42,6 +42,6 @@ public interface CommandFailure<A> {
         /**
          * The required arguments that couldn't parse.
          */
-        private final List<String> names;
+        private final List<Argument<?>> args;
     }
 }

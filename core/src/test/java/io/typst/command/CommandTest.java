@@ -12,8 +12,8 @@ import static io.typst.command.Command.pair;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CommandTest {
-    private static final Argument<Integer> intTabArg = StandardArguments.intArg.withTabCompleter(() -> Arrays.asList("10", "20"));
-    private static final Argument<Integer> intTabArg2 = StandardArguments.intArg.withTabCompleter(() -> Arrays.asList("30", "40"));
+    private static final Argument<Integer> intTabArg = StandardArguments.intArg.withTabCompletes(() -> Arrays.asList("10", "20"));
+    private static final Argument<Integer> intTabArg2 = StandardArguments.intArg.withTabCompletes(() -> Arrays.asList("30", "40"));
     // MyCommand = AddItem | RemoveItem | ...
     private static final Command.Mapping<MyCommand> itemCommand;
     private static final Command.Parser<MyCommand> pageCmd = Command.argument(PageItem::new, intTabArg, intTabArg2);

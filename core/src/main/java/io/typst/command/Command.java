@@ -5,7 +5,6 @@ import io.typst.command.algebra.Functor;
 import io.typst.command.algebra.Option;
 import io.typst.command.algebra.Tuple2;
 import io.typst.command.function.*;
-import io.typst.command.product.ArgumentProduct;
 import lombok.Data;
 import lombok.With;
 import org.jetbrains.annotations.Nullable;
@@ -150,21 +149,13 @@ public interface Command<A> {
     @With
     class Parser<A> implements Command<A> {
         private final Function<List<String>, Tuple2<Option<A>, List<String>>> parser;
-        private final List<Supplier<List<String>>> tabCompleters;
-        private final List<String> names;
+        private final List<Argument<?>> arguments;
         private final String description;
         private final String permission;
 
-        private Parser(
-                Function<List<String>, Tuple2<Option<A>, List<String>>> parser,
-                List<Supplier<List<String>>> tabCompleters,
-                List<String> names,
-                String description,
-                String permission
-        ) {
+        public Parser(Function<List<String>, Tuple2<Option<A>, List<String>>> parser, List<Argument<?>> arguments, String description, String permission) {
             this.parser = parser;
-            this.tabCompleters = tabCompleters;
-            this.names = names;
+            this.arguments = arguments;
             this.description = description;
             this.permission = permission;
         }
@@ -173,8 +164,7 @@ public interface Command<A> {
         public <B> Parser<B> map(Function<? super A, ? extends B> f) {
             return new Parser<>(
                     args -> parser.apply(args).map1(aO -> Functor.map(aO, f)),
-                    tabCompleters,
-                    getNames(),
+                    arguments,
                     getDescription(),
                     getPermission()
             );
@@ -199,7 +189,6 @@ public interface Command<A> {
         return new Parser<>(
                 args -> new Tuple2<>(new Option.Some<>(f.get()), args),
                 Collections.emptyList(),
-                singletonList(""),
                 "",
                 ""
         );
@@ -208,35 +197,103 @@ public interface Command<A> {
     static <T, A> Parser<T> argument(Function<? super A, ? extends T> f, Argument<A> argument) {
         return new Parser<>(
                 args -> argument.getParser().apply(args).map1(a -> Functor.map(Option.from(a), f)),
-                argument.getTabCompleters(),
-                argument.getNames(),
+                singletonList(argument),
                 "",
                 ""
         );
     }
 
     static <T, A, B> Parser<T> argument(BiFunction<? super A, ? super B, ? extends T> f, Argument<A> argA, Argument<B> argB) {
-        return argument(tup -> f.apply(tup.getA(), tup.getB()), ArgumentProduct.product(argA, argB));
+        return new Parser<>(
+                args -> {
+                    Tuple2<Optional<A>, List<String>> aPair = argA.getParser().apply(args);
+                    Tuple2<Optional<B>, List<String>> bPair = argB.getParser().apply(aPair.getB());
+                    return new Tuple2<>(Option.from(aPair.getA().flatMap(a -> bPair.getA().map(b -> f.apply(a, b)))), bPair.getB());
+                },
+                Arrays.asList(argA, argB),
+                "",
+                ""
+        );
     }
 
     static <T, A, B, C> Parser<T> argument(Function3<? super A, ? super B, ? super C, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC) {
-        return argument(tup -> f.apply(tup.getA(), tup.getB(), tup.getC()), ArgumentProduct.product(argA, argB, argC));
+        return new Parser<>(
+                args -> {
+                    Tuple2<Optional<A>, List<String>> aPair = argA.getParser().apply(args);
+                    Tuple2<Optional<B>, List<String>> bPair = argB.getParser().apply(aPair.getB());
+                    Tuple2<Optional<C>, List<String>> cPair = argC.getParser().apply(bPair.getB());
+                    return new Tuple2<>(Option.from(aPair.getA().flatMap(a -> bPair.getA().flatMap(b -> cPair.getA().map(c -> f.apply(a, b, c))))), cPair.getB());
+                },
+                Arrays.asList(argA, argB, argC),
+                "",
+                ""
+        );
     }
 
     static <T, A, B, C, D> Parser<T> argument(Function4<? super A, ? super B, ? super C, ? super D, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD) {
-        return argument(tup -> f.apply(tup.getA(), tup.getB(), tup.getC(), tup.getD()), ArgumentProduct.product(argA, argB, argC, argD));
+        return new Parser<>(
+                args -> {
+                    Tuple2<Optional<A>, List<String>> aPair = argA.getParser().apply(args);
+                    Tuple2<Optional<B>, List<String>> bPair = argB.getParser().apply(aPair.getB());
+                    Tuple2<Optional<C>, List<String>> cPair = argC.getParser().apply(bPair.getB());
+                    Tuple2<Optional<D>, List<String>> dPair = argD.getParser().apply(cPair.getB());
+                    return new Tuple2<>(Option.from(aPair.getA().flatMap(a -> bPair.getA().flatMap(b -> cPair.getA().flatMap(c -> dPair.getA().map(d -> f.apply(a, b, c, d)))))), dPair.getB());
+                },
+                Arrays.asList(argA, argB, argC, argD),
+                "",
+                ""
+        );
     }
 
     static <T, A, B, C, D, E> Parser<T> argument(Function5<? super A, ? super B, ? super C, ? super D, ? super E, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE) {
-        return argument(tup -> f.apply(tup.getA(), tup.getB(), tup.getC(), tup.getD(), tup.getE()), ArgumentProduct.product(argA, argB, argC, argD, argE));
+        return new Parser<>(
+                args -> {
+                    Tuple2<Optional<A>, List<String>> aPair = argA.getParser().apply(args);
+                    Tuple2<Optional<B>, List<String>> bPair = argB.getParser().apply(aPair.getB());
+                    Tuple2<Optional<C>, List<String>> cPair = argC.getParser().apply(bPair.getB());
+                    Tuple2<Optional<D>, List<String>> dPair = argD.getParser().apply(cPair.getB());
+                    Tuple2<Optional<E>, List<String>> ePair = argE.getParser().apply(dPair.getB());
+                    return new Tuple2<>(Option.from(aPair.getA().flatMap(a -> bPair.getA().flatMap(b -> cPair.getA().flatMap(c -> dPair.getA().flatMap(d -> ePair.getA().map(e -> f.apply(a, b, c, d, e))))))), ePair.getB());
+                },
+                Arrays.asList(argA, argB, argC, argD, argE),
+                "",
+                ""
+        );
     }
 
     static <T, A, B, C, D, E, F> Parser<T> argument(Function6<? super A, ? super B, ? super C, ? super D, ? super E, ? super F, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE, Argument<F> argF) {
-        return argument(tup -> f.apply(tup.getA(), tup.getB(), tup.getC(), tup.getD(), tup.getE(), tup.getF()), ArgumentProduct.product(argA, argB, argC, argD, argE, argF));
+        return new Parser<>(
+                args -> {
+                    Tuple2<Optional<A>, List<String>> aPair = argA.getParser().apply(args);
+                    Tuple2<Optional<B>, List<String>> bPair = argB.getParser().apply(aPair.getB());
+                    Tuple2<Optional<C>, List<String>> cPair = argC.getParser().apply(bPair.getB());
+                    Tuple2<Optional<D>, List<String>> dPair = argD.getParser().apply(cPair.getB());
+                    Tuple2<Optional<E>, List<String>> ePair = argE.getParser().apply(dPair.getB());
+                    Tuple2<Optional<F>, List<String>> fPair = argF.getParser().apply(ePair.getB());
+                    return new Tuple2<>(Option.from(aPair.getA().flatMap(a -> bPair.getA().flatMap(b -> cPair.getA().flatMap(c -> dPair.getA().flatMap(d -> ePair.getA().flatMap(e -> fPair.getA().map(fv -> f.apply(a, b, c, d, e, fv)))))))), fPair.getB());
+                },
+                Arrays.asList(argA, argB, argC, argD, argE, argF),
+                "",
+                ""
+        );
     }
 
     static <T, A, B, C, D, E, F, G> Parser<T> argument(Function7<? super A, ? super B, ? super C, ? super D, ? super E, ? super F, ? super G, ? extends T> f, Argument<A> argA, Argument<B> argB, Argument<C> argC, Argument<D> argD, Argument<E> argE, Argument<F> argF, Argument<G> argG) {
-        return argument(tup -> f.apply(tup.getA(), tup.getB(), tup.getC(), tup.getD(), tup.getE(), tup.getF(), tup.getG()), ArgumentProduct.product(argA, argB, argC, argD, argE, argF, argG));
+        return new Parser<>(
+                args -> {
+                    Tuple2<Optional<A>, List<String>> aPair = argA.getParser().apply(args);
+                    Tuple2<Optional<B>, List<String>> bPair = argB.getParser().apply(aPair.getB());
+                    Tuple2<Optional<C>, List<String>> cPair = argC.getParser().apply(bPair.getB());
+                    Tuple2<Optional<D>, List<String>> dPair = argD.getParser().apply(cPair.getB());
+                    Tuple2<Optional<E>, List<String>> ePair = argE.getParser().apply(dPair.getB());
+                    Tuple2<Optional<F>, List<String>> fPair = argF.getParser().apply(ePair.getB());
+                    Tuple2<Optional<G>, List<String>> gPair = argG.getParser().apply(fPair.getB());
+                    return new Tuple2<>(Option.from(aPair.getA().flatMap(a -> bPair.getA().flatMap(b -> cPair.getA().flatMap(c -> dPair.getA().flatMap(d -> ePair.getA().flatMap(e -> fPair.getA().flatMap(fv -> gPair.getA().map(g -> f.apply(a, b, c, d, e, fv, g))))))))), gPair.getB());
+                },
+                Arrays.asList(argA, argB, argC, argD, argE, argF, argG),
+                "",
+                ""
+        );
     }
 
     static <K, V> Tuple2<K, V> pair(K key, V value) {
@@ -278,7 +335,7 @@ public interface Command<A> {
             int currentIndex = index + list.size() - remainList.size();
             return aO.isDefined()
                     ? new Either.Right<>(new CommandSuccess<>(args, currentIndex, a, parser))
-                    : new Either.Left<>(new CommandFailure.ParsingFailure<>(args, index, parser, parser.getNames()));
+                    : new Either.Left<>(new CommandFailure.ParsingFailure<>(args, index, parser, parser.getArguments()));
         }
         throw new UnsupportedOperationException();
     }
@@ -310,9 +367,9 @@ public interface Command<A> {
             Parser<A> parser = (Parser<A>) command;
             String lastArgument = args.length >= 1 ? args[args.length - 1] : "";
             int pos = args.length - index - 1;
-            List<Supplier<List<String>>> tabCompleters = parser.getTabCompleters();
-            Supplier<List<String>> tabCompleter = tabCompleters.size() > pos && pos >= 0
-                    ? tabCompleters.get(pos)
+            List<Argument<?>> arguments = parser.getArguments();
+            Supplier<List<String>> tabCompleter = arguments.size() > pos && pos >= 0
+                    ? arguments.get(pos).getTabCompletes()
                     : null;
             String lowerArgument = lastArgument.toLowerCase();
             List<Tuple2<String, Optional<Command<A>>>> tabCompletes = tabCompleter != null

@@ -1,5 +1,6 @@
 package io.typst.command.bukkit;
 
+import io.typst.command.Argument;
 import io.typst.command.CommandHelp;
 import io.typst.command.CommandSpec;
 import lombok.Value;
@@ -34,7 +35,7 @@ public class BukkitCommandHelp {
         if (permission.isEmpty() || help.getSender().hasPermission(permission)) {
             CommandSpec newSpec = help.getLanguage().equalsIgnoreCase("ko_kr")
                     ? spec.withArguments(spec.getArguments().stream()
-                    .map(BukkitCommandHelp::translateToKor)
+                    .map(arg -> arg.withName(translateToKor(arg.getName())))
                     .collect(Collectors.toList()))
                     : spec;
             return CommandHelp.format(help.toHelp().withSpec(newSpec));

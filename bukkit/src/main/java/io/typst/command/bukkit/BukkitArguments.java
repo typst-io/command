@@ -20,6 +20,7 @@ public class BukkitArguments {
     public static final Argument<Player> playerArg =
             Argument.ofUnary(
                     "player",
+                    Player.class,
                     s -> Optional.ofNullable(Bukkit.getPlayer(s)),
                     () -> Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList())
             );
@@ -27,6 +28,7 @@ public class BukkitArguments {
     public static final Argument<OfflinePlayer> offlinePlayerArg =
             Argument.ofUnary(
                     "offlineplayer",
+                    OfflinePlayer.class,
                     s -> Optional.of(Bukkit.getOfflinePlayer(s)),
                     () -> Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList())
             );
@@ -34,6 +36,7 @@ public class BukkitArguments {
     public static final Argument<Material> materialArg =
             Argument.ofUnary(
                     "material",
+                    Material.class,
                     s -> Either.catching(() -> Material.valueOf(s)).toJavaOptional(),
                     () -> Arrays.stream(Material.values()).map(Material::name).collect(Collectors.toList())
             );
@@ -41,6 +44,7 @@ public class BukkitArguments {
     public static final Argument<PotionEffectType> potionArg =
             Argument.ofUnary(
                     "potion",
+                    PotionEffectType.class,
                     s -> Optional.ofNullable(PotionEffectType.getByName(s)),
                     () -> Arrays.stream(PotionEffectType.values())
                             .filter(Objects::nonNull)
@@ -52,6 +56,7 @@ public class BukkitArguments {
     public static final Argument<Enchantment> enchantArg =
             Argument.ofUnary(
                     "enchant",
+                    Enchantment.class,
                     s -> Optional.ofNullable(Enchantment.getByName(s)),
                     () -> Arrays.stream(Enchantment.values())
                             .filter(Objects::nonNull)

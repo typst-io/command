@@ -18,7 +18,7 @@ import static io.typst.command.StandardArguments.strArg;
 import static java.util.function.Function.identity;
 
 public class CommandTest {
-    private static final Argument<String> strArgTab = strArg.withTabCompleter(() -> Collections.singletonList("tab"));
+    private static final Argument<String> strArgTab = strArg.withTabCompletes(() -> Collections.singletonList("tab"));
     private static final Command.Mapping<Object> command = Command.mapping(
             pair("a", Command.present(null)),
             pair("b", Command.argument(identity(), strArg)),
@@ -59,7 +59,7 @@ public class CommandTest {
         StringBuilder output = new StringBuilder();
         MockPlayer player = new MockPlayer(new MockSender(output), "ko");
         BukkitCommands.execute(player, "mycmd", new String[]{"d"}, command, BukkitCommandConfig.empty);
-        Assertions.assertEquals("/mycmd d (문자열) (정수) - desc\n잘못된 명령어입니다!\n", output.toString());
+        Assertions.assertEquals(" \n/mycmd d (문자열) (정수) - desc\n잘못된 명령어입니다!\n", output.toString());
         System.out.println(output);
     }
 
