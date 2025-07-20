@@ -19,7 +19,6 @@ public class Argument<A> {
     // args -> (result, remainingArgs)
     // List<String> -> (Option<A>, List<String>)
     private final Function<List<String>, Tuple2<Optional<A>, List<String>>> parser;
-    // TODO: Function<List<String>, Supplier<Collection<String>>>
     private final List<Supplier<List<String>>> tabCompleters;
 
     public static <A> Argument<A> ofUnary(
