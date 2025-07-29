@@ -2,6 +2,22 @@ plugins {
     id 'base'
 }
 
+tasks.register("publishCentralPortal") {
+    group = 'publishing'
+    doLast {
+        def url = new URL("https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/$project.group")
+        println(url)
+        def con = url.openConnection() as HttpURLConnection
+        def username = findProperty("ossrhUsername")?.toString()
+        def password = findProperty("ossrhPassword")?.toString()
+        def credential = Base64.encoder.encodeToString("$username:$password".getBytes())
+        def authValue = "Bearer $credential"
+        con.setRequestMethod("POST")
+        con.setRequestProperty("Authorization", authValue)
+        println(con.responseCode)
+    }
+}
+
 allprojects {
     group 'io.typst'
     version '3.0.0'
@@ -36,18 +52,11 @@ allprojects {
                     }
                 }
             }
+            // NOTE: https://central.sonatype.org/pages/ossrh-eol/
             repositories {
                 maven {
                     name = "sonatypeReleases"
-                    url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-                    credentials {
-                        username = findProperty("ossrhUsername")?.toString()
-                        password = findProperty("ossrhPassword")?.toString()
-                    }
-                }
-                maven {
-                    name = "sonatypeSnapshots"
-                    url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+                    url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
                     credentials {
                         username = findProperty("ossrhUsername")?.toString()
                         password = findProperty("ossrhPassword")?.toString()
