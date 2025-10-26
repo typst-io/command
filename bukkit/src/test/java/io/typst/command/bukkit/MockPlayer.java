@@ -36,10 +36,12 @@ import java.util.*;
 public class MockPlayer implements Player {
     private final MockSender sender;
     private final String language;
+    private final UUID uuid;
 
-    public MockPlayer(MockSender sender, String language) {
+    public MockPlayer(MockSender sender, String language, UUID uuid) {
         this.sender = sender;
         this.language = language;
+        this.uuid = uuid;
     }
 
     @Override
@@ -1559,7 +1561,7 @@ public class MockPlayer implements Player {
 
     @Override
     public UUID getUniqueId() {
-        return null;
+        return uuid;
     }
 
     @Override

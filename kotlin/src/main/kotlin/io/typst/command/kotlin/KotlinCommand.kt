@@ -6,7 +6,12 @@ import io.typst.command.Command.pair
 
 fun <T> commandMap(
     vararg args: Pair<String, Command<out T>>,
-): Command.Mapping<T> = Command.mapping(*args.map { (name, cmd) -> pair(name, cmd) }.toTypedArray())
+): Command.Mapping<T> = Command.mapping<T>(*args.map { (name, cmd) -> pair(name, cmd) }.toTypedArray())
+
+fun <T> commandMap(
+    fallback: Command<T>,
+    vararg args: Pair<String, Command<out T>>,
+): Command.Mapping<T> = commandMap(*args).withFallback(fallback)
 
 fun <T> command(t: T): Command.Parser<T> = Command.argument { t }
 

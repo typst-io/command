@@ -11,13 +11,13 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 @SuppressWarnings("DuplicatedCode")
-@Value(staticConstructor = "of")
+@Value(staticConstructor = "ofContext")
 @With
 public class Argument<A> {
     String name;
     Class<?> classType;
     Function<List<String>, Tuple2<Optional<A>, List<String>>> parser;
-    Supplier<List<String>> tabCompletes;
+    Function<ParseContext, List<String>> contextualTabCompleter;
 
     public static <A> Argument<A> ofUnary(
             String name,
@@ -40,12 +40,25 @@ public class Argument<A> {
         );
     }
 
+    public static <A> Argument<A> of(
+            String name,
+            Class<?> classType,
+            Function<List<String>, Tuple2<Optional<A>, List<String>>> parser,
+            Supplier<List<String>> tabCompletes
+    ) {
+        return new Argument<>(name, classType, parser, ctx -> tabCompletes.get());
+    }
+
+    public Argument<A> withTabCompletes(Supplier<List<String>> f) {
+        return withContextualTabCompleter(ctx -> f.get());
+    }
+
     public Argument<Optional<A>> asOptional() {
         return new Argument<>(
                 name,
                 classType,
                 args -> getParser().apply(args).map1(Optional::of),
-                getTabCompletes()
+                getContextualTabCompleter()
         );
     }
 
@@ -57,7 +70,7 @@ public class Argument<A> {
                     Tuple2<Optional<A>, List<String>> pair = getParser().apply(args);
                     return pair.map1(a -> a.map(f));
                 },
-                getTabCompletes()
+                getContextualTabCompleter()
         );
     }
 }

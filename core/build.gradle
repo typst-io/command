@@ -1,16 +1,18 @@
 plugins {
     id 'java-library'
-    id 'kr.entree.spigradle.base' version '2.4.6'
+    id 'io.typst.spigradle' version '3.1.2'
     id 'maven-publish'
     id 'signing'
 }
 
 repositories {
     mavenCentral()
+    spigotmc()
 }
 
 dependencies {
     compileOnly lombok()
+    compileOnly 'org.jetbrains:annotations:26.0.2-1'
     annotationProcessor lombok()
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
@@ -25,6 +27,8 @@ java {
 test {
     useJUnitPlatform()
 }
+
+generateSpigotDescription.enabled = false
 
 registerPublish()
 

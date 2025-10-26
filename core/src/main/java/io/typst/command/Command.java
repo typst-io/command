@@ -341,10 +341,14 @@ public interface Command<A> {
     }
 
     static <A> CommandTabResult<A> tabComplete(String[] args, Command<A> command) {
-        return tabCompleteWithIndex(0, args, command);
+        return tabComplete(new CommandSource(""), args, command);
     }
 
-    static <A> CommandTabResult<A> tabCompleteWithIndex(int index, String[] args, Command<A> command) {
+    static <A> CommandTabResult<A> tabComplete(CommandSource source, String[] args, Command<A> command) {
+        return tabCompleteWithIndex(0, source, args, command);
+    }
+
+    static <A> CommandTabResult<A> tabCompleteWithIndex(int index, CommandSource source, String[] args, Command<A> command) {
         String arg = args.length > index ? args[index] : "";
         String arglc = arg.toLowerCase();
         if (command instanceof Command.Mapping) {
@@ -360,7 +364,7 @@ public interface Command<A> {
             } else {
                 Command<A> subCommand = mapCommand.getCommandMap().get(arg);
                 return subCommand != null
-                        ? tabCompleteWithIndex(index + 1, args, subCommand)
+                        ? tabCompleteWithIndex(index + 1, source, args, subCommand)
                         : new CommandTabResult.Suggestions<>(Collections.emptyList());
             }
         } else if (command instanceof Parser) {
@@ -368,12 +372,12 @@ public interface Command<A> {
             String lastArgument = args.length >= 1 ? args[args.length - 1] : "";
             int pos = args.length - index - 1;
             List<Argument<?>> arguments = parser.getArguments();
-            Supplier<List<String>> tabCompleter = arguments.size() > pos && pos >= 0
-                    ? arguments.get(pos).getTabCompletes()
+            Function<ParseContext, List<String>> tabCompleter = arguments.size() > pos && pos >= 0
+                    ? arguments.get(pos).getContextualTabCompleter()
                     : null;
             String lowerArgument = lastArgument.toLowerCase();
             List<Tuple2<String, Optional<Command<A>>>> tabCompletes = tabCompleter != null
-                    ? tabCompleter.get().stream()
+                    ? tabCompleter.apply(new ParseContext(source, Arrays.asList(args))).stream()
                     .filter(s -> s.toLowerCase().startsWith(lowerArgument))
                     .map(s -> new Tuple2<>(s, Optional.of(command)))
                     .collect(Collectors.toList())

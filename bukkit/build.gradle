@@ -1,17 +1,19 @@
 plugins {
     id 'java-library'
-    id 'kr.entree.spigradle' version '2.4.6'
+    id 'io.typst.spigradle' version '3.1.2'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'maven-publish'
     id 'signing'
 }
 
 repositories {
-     mavenCentral()
+    mavenCentral()
+    spigotmc()
 }
 
 dependencies {
     api(project(":command-core"))
+    compileOnly 'org.jetbrains:annotations:26.0.2-1'
     compileOnly spigot('1.16.5')
     compileOnly lombok()
     annotationProcessor lombok()
@@ -35,7 +37,6 @@ spigot {
             aliases = ['command', 'cmd']
         }
     }
-    excludeLibraries 'command-core'
 }
 
 assemble.dependsOn(shadowJar)

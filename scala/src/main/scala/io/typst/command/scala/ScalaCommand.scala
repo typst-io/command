@@ -1,8 +1,7 @@
 package io.typst.command.scala
 
 import io.typst.command.Command.{Mapping, Parser}
-import io.typst.command.algebra
-import io.typst.command.{Argument, Command, StandardArguments}
+import io.typst.command.{Argument, Command, ParseContext, StandardArguments, algebra}
 import io.typst.command.algebra.Tuple2
 
 import java.util

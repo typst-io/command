@@ -81,12 +81,15 @@ public class BukkitCommands {
         return Optional.empty();
     }
 
-    public static <A> CommandTabResult<A> tabComplete(String[] args, Command<A> command) {
-        return Command.tabComplete(args, command);
+    public static <A> CommandTabResult<A> tabComplete(CommandSource source, String[] args, Command<A> command) {
+        return Command.tabComplete(source, args, command);
     }
 
     public static <A> List<String> tabComplete(CommandSender sender, String[] args, Command<A> cmd, BiFunction<CommandSender, A, List<String>> tabCompleter) {
-        CommandTabResult<A> result = tabComplete(args, cmd);
+        CommandSource source = sender instanceof Player
+                ? new CommandSource(((Player) sender).getUniqueId().toString())
+                : new CommandSource("");
+        CommandTabResult<A> result = tabComplete(source, args, cmd);
         if (result instanceof CommandTabResult.Suggestions) {
             CommandTabResult.Suggestions<A> suggestions = (CommandTabResult.Suggestions<A>) result;
             return suggestions.getSuggestions().stream()

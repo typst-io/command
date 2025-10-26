@@ -18,14 +18,6 @@ public class BukkitControlFlows {
         return Locale.getDefault().getLanguage();
     }
 
-    /**
-     * @deprecated use {@link #getPlayerOrThrow(CommandSender)} instead.
-     */
-    @Deprecated
-    public static Player tryGetPlayer(CommandSender sender) {
-        return getPlayerOrThrow(sender);
-    }
-
     public static Player getPlayerOrThrow(CommandSender sender) {
         if (sender instanceof Player) {
             return ((Player) sender);
