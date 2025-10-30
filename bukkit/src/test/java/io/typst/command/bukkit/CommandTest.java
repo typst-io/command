@@ -28,7 +28,7 @@ public class CommandTest {
                     pair("a", Command.present(null))
             )),
             pair("f", Command.argument((a, b) -> null, strArgTab, intArg).withDescription("desc").withPermission("test.permission"))
-    );
+    ).withFallback(Command.argument(identity(), strArg));
 
     @Test
     public void help() {
@@ -49,6 +49,26 @@ public class CommandTest {
                         "/mycmd c (문자열) (정수)",
                         "/mycmd d (문자열) (정수) - desc",
                         "/mycmd e a"
+                ),
+                msgs
+        );
+    }
+
+    @Test
+    public void helpFallback() {
+        StringBuilder output = new StringBuilder();
+        MockPlayer player = new MockPlayer(new MockSender(output), "ko", UUID.randomUUID());
+        List<String> msgs = BukkitCommands.getCommandUsages(
+                player,
+                "mycmd",
+                new String[0],
+                1,
+                command.getFallback().orElse(null),
+                BukkitCommandConfig.empty
+        ).stream().map(ChatColor::stripColor).collect(Collectors.toList());
+        Assertions.assertEquals(
+                Collections.singletonList(
+                        "/mycmd (문자열)"
                 ),
                 msgs
         );

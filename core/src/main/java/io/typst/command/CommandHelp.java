@@ -20,15 +20,16 @@ public class CommandHelp {
         CommandSpec spec = help.getSpec();
         List<String> args = help.getArguments();
         String argSuffix;
+        String space = args.isEmpty() ? "" : " ";
         if (help.getLanguage().equals("ko")) {
             argSuffix = spec.getArguments().stream().anyMatch(arg -> !arg.getName().isEmpty())
-                    ? " §e" + spec.getArguments().stream()
+                    ? space + "§e" + spec.getArguments().stream()
                     .map(s -> String.format("(%s)", translateToKor(s.getName())))
                     .collect(Collectors.joining(" "))
                     : "";
         } else {
             argSuffix = spec.getArguments().stream().anyMatch(arg -> !arg.getName().isEmpty())
-                    ? " §e" + spec.getArguments().stream()
+                    ? space + "§e" + spec.getArguments().stream()
                     .map(arg -> String.format("(%s)", arg.getName()))
                     .collect(Collectors.joining(" "))
                     : "";

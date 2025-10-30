@@ -9,11 +9,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.typst.command.Command.pair;
+import static io.typst.command.StandardArguments.intArg;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CommandTest {
-    private static final Argument<Integer> intTabArg = StandardArguments.intArg.withTabCompletes(() -> Arrays.asList("10", "20"));
-    private static final Argument<Integer> intTabArg2 = StandardArguments.intArg.withTabCompletes(() -> Arrays.asList("30", "40"));
+    private static final Argument<Integer> intTabArg = intArg.withTabCompletes(() -> Arrays.asList("10", "20"));
+    private static final Argument<Integer> intTabArg2 = intArg.withTabCompletes(() -> Arrays.asList("30", "40"));
     // MyCommand = AddItem | RemoveItem | ...
     private static final Command.Mapping<MyCommand> itemCommand;
     private static final Command.Parser<MyCommand> pageCmd = Command.argument(PageItem::new, intTabArg, intTabArg2);
@@ -23,8 +24,8 @@ public class CommandTest {
                 pair("open", Command.present(new OpenItemList()).withDescription("아이템 목록을 엽니다.")),
                 // intArg: Argument<Integer>
                 // strArg: Argument<String>
-                pair("add", Command.argument(AddItem::new, StandardArguments.intArg, StandardArguments.strArg)),
-                pair("remove", Command.argument(RemoveItem::new, StandardArguments.intArg)),
+                pair("add", Command.argument(AddItem::new, intArg, StandardArguments.strArg)),
+                pair("remove", Command.argument(RemoveItem::new, intArg)),
                 pair("page", pageCmd),
                 pair("lazy", Command.present(new AddItem(0, null))),
                 pair("camelPage", pageCmd)
@@ -174,6 +175,11 @@ public class CommandTest {
         }
     }
 
+    @Test
+    public void help2() {
+
+    }
+
     private <A> void helpCommand(String[] args, int position, Command<A> cmd) {
         String[] succArgs = args.length >= 1
                 ? Arrays.copyOfRange(args, 0, position)
@@ -196,13 +202,19 @@ public class CommandTest {
     @Test
     public void mappingFallback() {
         String[] args = new String[]{"item"};
-        Either<CommandFailure<MyCommand>, CommandSuccess<MyCommand>> result =
-                Command.parse(args, Command.mapping(
-                        pair("item", itemCommandWithFallback)
-                ));
+        Command.Mapping<MyCommand> commandMap = Command.mapping(
+                pair("item", itemCommandWithFallback)
+        );
+        Either<CommandFailure<MyCommand>, CommandSuccess<MyCommand>> result = Command.parse(args, commandMap);
         assertEquals(
-                new Either.Right<>(new CommandSuccess<>(args, 2, new FallbackItem(), itemCommandWithFallback.getFallback().orElse(null))),
+                new Either.Right<>(new CommandSuccess<>(args, 1, new FallbackItem(), itemCommandWithFallback.getFallback().orElse(null))),
                 result
+        );
+        String[] args2 = new String[]{"item", "help"};
+        Either<CommandFailure<MyCommand>, CommandSuccess<MyCommand>> result2 = Command.parse(args2, commandMap);
+        assertEquals(
+                new Either.Left<>(new CommandFailure.UnknownSubCommand<>(args2, 1, itemCommandWithFallback)),
+                result2
         );
     }
 

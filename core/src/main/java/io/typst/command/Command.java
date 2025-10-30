@@ -304,6 +304,7 @@ public interface Command<A> {
         return parseWithIndex(0, args, command);
     }
 
+    @SuppressWarnings("unused")
     static <A> Optional<A> parseO(String[] args, Command<A> command) {
         return parse(args, command).toJavaOptional().map(CommandSuccess::getCommand);
     }
@@ -314,13 +315,17 @@ public interface Command<A> {
             Mapping<A> mapCommand = (Mapping<A>) command;
 
             Command<A> subCommand = mapCommand.getCommandMap().get(argument);
-            Command<A> subCommandOrFallback = subCommand != null ? subCommand : mapCommand.getFallback().orElse(null);
-            if (subCommandOrFallback != null) {
-                return parseWithIndex(index + 1, args, subCommandOrFallback);
+            if (subCommand != null) {
+                return parseWithIndex(index + 1, args, subCommand);
             } else if (argument != null) {
                 return new Either.Left<>(new CommandFailure.UnknownSubCommand<>(args, index, mapCommand));
             } else {
-                return new Either.Left<>(new CommandFailure.FewArguments<>(args, index, mapCommand));
+                Command<A> fallback = mapCommand.getFallback().orElse(null);
+                if (fallback != null) {
+                    return parseWithIndex(index, args, fallback);
+                } else {
+                    return new Either.Left<>(new CommandFailure.FewArguments<>(args, index, mapCommand));
+                }
             }
         } else if (command instanceof Parser) {
             Parser<A> parser = (Parser<A>) command;
@@ -422,17 +427,14 @@ public interface Command<A> {
                         String key = pair.getKey();
                         Command<A> subCmd = pair.getValue();
                         List<Entry<List<String>, Command<A>>> subEntries = getEntries(subCmd);
-                        return subEntries.size() >= 1
+                        return !subEntries.isEmpty()
                                 ? subEntries.stream()
                                 .map(subPair -> {
                                     List<String> keys = new ArrayList<>();
                                     keys.add(key);
                                     keys.addAll(subPair.getKey());
                                     return new SimpleEntry<>(
-                                            Stream.concat(
-                                                    Stream.of(key),
-                                                    subPair.getKey().stream()
-                                            ).collect(Collectors.toList()),
+                                            keys,
                                             subPair.getValue()
                                     );
                                 })
@@ -440,7 +442,7 @@ public interface Command<A> {
                     })
                     .collect(Collectors.toList());
         } else if (cmd instanceof Command.Parser) {
-            Parser<A> parser = (Parser<A>) cmd;
+//            Parser<A> parser = (Parser<A>) cmd;
             return Collections.singletonList(new SimpleEntry<>(Collections.emptyList(), cmd));
         }
         return Collections.emptyList();
