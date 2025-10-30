@@ -312,16 +312,15 @@ public interface Command<A> {
         String argument = args.length > index ? args[index] : null;
         if (command instanceof Command.Mapping) {
             Mapping<A> mapCommand = (Mapping<A>) command;
-            if (argument == null) {
-                Command<A> fallback = mapCommand.getFallback().orElse(null);
-                return fallback != null
-                        ? parseWithIndex(index + 1, args, fallback)
-                        : new Either.Left<>(new CommandFailure.FewArguments<>(args, index, mapCommand));
+
+            Command<A> subCommand = mapCommand.getCommandMap().get(argument);
+            Command<A> subCommandOrFallback = subCommand != null ? subCommand : mapCommand.getFallback().orElse(null);
+            if (subCommandOrFallback != null) {
+                return parseWithIndex(index + 1, args, subCommandOrFallback);
+            } else if (argument != null) {
+                return new Either.Left<>(new CommandFailure.UnknownSubCommand<>(args, index, mapCommand));
             } else {
-                Command<A> subCommand = mapCommand.getCommandMap().get(argument);
-                return subCommand != null
-                        ? parseWithIndex(index + 1, args, subCommand)
-                        : new Either.Left<>(new CommandFailure.UnknownSubCommand<>(args, index, mapCommand));
+                return new Either.Left<>(new CommandFailure.FewArguments<>(args, index, mapCommand));
             }
         } else if (command instanceof Parser) {
             Parser<A> parser = (Parser<A>) command;
