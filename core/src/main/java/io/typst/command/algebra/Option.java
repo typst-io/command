@@ -3,6 +3,7 @@ package io.typst.command.algebra;
 import lombok.Value;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 public interface Option<A> {
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -11,7 +12,7 @@ public interface Option<A> {
         return a != null ? new Some<>(a) : new None<>();
     }
 
-    default  Optional<A> asJavaOptional() {
+    default Optional<A> asJavaOptional() {
         return this instanceof Some
                 ? Optional.of(((Some<A>) this).getValue())
                 : Optional.empty();
@@ -23,6 +24,10 @@ public interface Option<A> {
 
     default A getOrNull() {
         return this instanceof Some ? ((Some<A>) this).getValue() : null;
+    }
+
+    default <B> Option<B> map(Function<? super A, ? extends B> f) {
+        return Functor.map(this, f);
     }
 
     @Value

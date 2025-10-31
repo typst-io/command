@@ -36,6 +36,8 @@ public class CommandTest {
             itemCommand.withFallback(Command.present(new FallbackItem()));
     public static final Command.Mapping<MyCommand> itemCommandWithFallback2 =
             itemCommandWithFallback.withFallback(Command.argument(FallbackArg::new, intArg));
+    public static final Command.Mapping<MyCommand> itemCommandWithFallback3 =
+            itemCommandWithFallback.withFallback(Command.argument(FallbackOptArg::new, intArg.asOptional()));
     private static final Command<MyCommand> reloadCommand =
             Command.<MyCommand>present(new ReloadCommand()).withDescription("리로드합니다.");
     private static final Command<MyCommand> rootCommand =
@@ -120,6 +122,20 @@ public class CommandTest {
         @Override
         public boolean equals(Object o) {
             return o instanceof FallbackArg;
+        }
+    }
+
+    public static class FallbackOptArg implements MyCommand {
+        public final Integer value;
+
+        @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+        public FallbackOptArg(Optional<Integer> value) {
+            this.value = value.orElse(null);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof FallbackOptArg;
         }
     }
 
@@ -244,6 +260,19 @@ public class CommandTest {
         Either<CommandFailure<MyCommand>, CommandSuccess<MyCommand>> result3 = Command.parse(args, commandMap);
         assertEquals(
                 new Either.Right<>(new CommandSuccess<>(args, 2, new FallbackArg(1), itemCommandWithFallback2.getFallback().orElse(null))),
+                result3
+        );
+    }
+
+    @Test
+    public void fallbackOptionalArg() {
+        String[] args = new String[]{"item", "help"};
+        Command.Mapping<MyCommand> commandMap = Command.mapping(
+                pair("item", itemCommandWithFallback3)
+        );
+        Either<CommandFailure<MyCommand>, CommandSuccess<MyCommand>> result3 = Command.parse(args, commandMap);
+        assertEquals(
+                new Either.Left<>(new CommandFailure.UnknownSubCommand<>(args, 1, itemCommandWithFallback3)),
                 result3
         );
     }

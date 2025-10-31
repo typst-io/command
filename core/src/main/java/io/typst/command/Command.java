@@ -196,7 +196,10 @@ public interface Command<A> {
 
     static <T, A> Parser<T> argument(Function<? super A, ? extends T> f, Argument<A> argument) {
         return new Parser<>(
-                args -> argument.getParser().apply(args).map1(a -> Functor.map(Option.from(a), f)),
+                args -> {
+                    Tuple2<Optional<A>, List<String>> aPair = argument.getParser().apply(args);
+                    return aPair.map1(a -> Option.from(a).map(f));
+                },
                 singletonList(argument),
                 "",
                 ""

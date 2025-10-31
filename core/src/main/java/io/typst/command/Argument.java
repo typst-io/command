@@ -4,7 +4,7 @@ import io.typst.command.algebra.Tuple2;
 import lombok.Value;
 import lombok.With;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -29,7 +29,7 @@ public class Argument<A> {
                 name,
                 classType,
                 args -> {
-                    List<String> newArgs = new ArrayList<>(args);
+                    List<String> newArgs = new LinkedList<>(args);
                     String arg = newArgs.size() >= 1 ? newArgs.remove(0) : "";
                     return new Tuple2<>(
                             arg.length() >= 1 ? parser.apply(arg) : Optional.empty(),
@@ -57,7 +57,12 @@ public class Argument<A> {
         return new Argument<>(
                 name,
                 classType,
-                args -> getParser().apply(args).map1(Optional::of),
+                args -> {
+                    Tuple2<Optional<A>, List<String>> ret = getParser().apply(args);
+                    return args.isEmpty()
+                            ? ret.map1(Optional::of)
+                            : ret.map1(aO -> Optional.empty());
+                },
                 getContextualTabCompleter()
         );
     }
