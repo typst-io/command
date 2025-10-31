@@ -317,14 +317,28 @@ public interface Command<A> {
             Command<A> subCommand = mapCommand.getCommandMap().get(argument);
             if (subCommand != null) {
                 return parseWithIndex(index + 1, args, subCommand);
-            } else if (argument != null) {
-                return new Either.Left<>(new CommandFailure.UnknownSubCommand<>(args, index, mapCommand));
             } else {
                 Command<A> fallback = mapCommand.getFallback().orElse(null);
-                if (fallback != null) {
-                    return parseWithIndex(index, args, fallback);
+                if (argument != null) {
+                    // case the argument exist: return fallback if the fallback has arguments otherwise UnknownSubCommand
+                    Either<CommandFailure<A>, CommandSuccess<A>> fallbackResult = fallback != null ? parseWithIndex(index, args, fallback) : null;
+                    Command<A> fallbackSuccess = fallbackResult != null
+                            ? fallbackResult.toJavaOptional()
+                            .flatMap(a -> Optional.ofNullable(a.getNode()))
+                            .orElse(null)
+                            : null;
+                    Parser<A> fallbackSuccessParser = fallbackSuccess instanceof Parser ? ((Parser<A>) fallbackSuccess) : null;
+                    if (fallbackSuccessParser != null && !fallbackSuccessParser.getArguments().isEmpty()) {
+                        return fallbackResult;
+                    } else {
+                        return new Either.Left<>(new CommandFailure.UnknownSubCommand<>(args, index, mapCommand));
+                    }
                 } else {
-                    return new Either.Left<>(new CommandFailure.FewArguments<>(args, index, mapCommand));
+                    if (fallback != null) {
+                        return parseWithIndex(index, args, fallback);
+                    } else {
+                        return new Either.Left<>(new CommandFailure.FewArguments<>(args, index, mapCommand));
+                    }
                 }
             }
         } else if (command instanceof Parser) {
@@ -443,7 +457,7 @@ public interface Command<A> {
                     .collect(Collectors.toList());
         } else if (cmd instanceof Command.Parser) {
 //            Parser<A> parser = (Parser<A>) cmd;
-            return Collections.singletonList(new SimpleEntry<>(Collections.emptyList(), cmd));
+            return singletonList(new SimpleEntry<>(Collections.emptyList(), cmd));
         }
         return Collections.emptyList();
     }

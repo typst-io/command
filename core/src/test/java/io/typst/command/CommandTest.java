@@ -34,6 +34,8 @@ public class CommandTest {
 
     private static final Command.Mapping<MyCommand> itemCommandWithFallback =
             itemCommand.withFallback(Command.present(new FallbackItem()));
+    public static final Command.Mapping<MyCommand> itemCommandWithFallback2 =
+            itemCommandWithFallback.withFallback(Command.argument(FallbackArg::new, intArg));
     private static final Command<MyCommand> reloadCommand =
             Command.<MyCommand>present(new ReloadCommand()).withDescription("리로드합니다.");
     private static final Command<MyCommand> rootCommand =
@@ -108,6 +110,19 @@ public class CommandTest {
         }
     }
 
+    public static class FallbackArg implements MyCommand {
+        public final int value;
+
+        public FallbackArg(int value) {
+            this.value = value;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof FallbackArg;
+        }
+    }
+
     public static class ReloadCommand implements MyCommand {
     }
 
@@ -175,11 +190,6 @@ public class CommandTest {
         }
     }
 
-    @Test
-    public void help2() {
-
-    }
-
     private <A> void helpCommand(String[] args, int position, Command<A> cmd) {
         String[] succArgs = args.length >= 1
                 ? Arrays.copyOfRange(args, 0, position)
@@ -200,7 +210,7 @@ public class CommandTest {
     }
 
     @Test
-    public void mappingFallback() {
+    public void fallback() {
         String[] args = new String[]{"item"};
         Command.Mapping<MyCommand> commandMap = Command.mapping(
                 pair("item", itemCommandWithFallback)
@@ -210,11 +220,31 @@ public class CommandTest {
                 new Either.Right<>(new CommandSuccess<>(args, 1, new FallbackItem(), itemCommandWithFallback.getFallback().orElse(null))),
                 result
         );
+    }
+
+    @Test
+    public void fallbackNone() {
         String[] args2 = new String[]{"item", "help"};
+        Command.Mapping<MyCommand> commandMap = Command.mapping(
+                pair("item", itemCommandWithFallback)
+        );
         Either<CommandFailure<MyCommand>, CommandSuccess<MyCommand>> result2 = Command.parse(args2, commandMap);
         assertEquals(
                 new Either.Left<>(new CommandFailure.UnknownSubCommand<>(args2, 1, itemCommandWithFallback)),
                 result2
+        );
+    }
+
+    @Test
+    public void fallbackArg() {
+        String[] args = new String[]{"item", "1"};
+        Command.Mapping<MyCommand> commandMap = Command.mapping(
+                pair("item", itemCommandWithFallback2)
+        );
+        Either<CommandFailure<MyCommand>, CommandSuccess<MyCommand>> result3 = Command.parse(args, commandMap);
+        assertEquals(
+                new Either.Right<>(new CommandSuccess<>(args, 2, new FallbackArg(1), itemCommandWithFallback2.getFallback().orElse(null))),
+                result3
         );
     }
 
