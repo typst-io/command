@@ -61,7 +61,7 @@ public class Argument<A> {
                     Tuple2<Optional<A>, List<String>> ret = getParser().apply(args);
                     return args.isEmpty()
                             ? ret.map1(Optional::of)
-                            : ret.map1(aO -> Optional.empty());
+                            : ret.map1(aO -> aO.map(Optional::of));
                 },
                 getContextualTabCompleter()
         );

@@ -266,6 +266,19 @@ public class CommandTest {
 
     @Test
     public void fallbackOptionalArg() {
+        String[] args = new String[]{"item", "1"};
+        Command.Mapping<MyCommand> commandMap = Command.mapping(
+                pair("item", itemCommandWithFallback3)
+        );
+        Either<CommandFailure<MyCommand>, CommandSuccess<MyCommand>> result3 = Command.parse(args, commandMap);
+        assertEquals(
+                new Either.Right<>(new CommandSuccess<>(args, 2, new FallbackOptArg(Optional.of(1)), itemCommandWithFallback3.getFallback().orElse(null))),
+                result3
+        );
+    }
+
+    @Test
+    public void fallbackOptionalArgFailure() {
         String[] args = new String[]{"item", "help"};
         Command.Mapping<MyCommand> commandMap = Command.mapping(
                 pair("item", itemCommandWithFallback3)
