@@ -117,7 +117,7 @@ public class BukkitCommands {
      */
     static <A> List<String> getCommandUsages(CommandSender sender, String label, String[] args, int position, Command<A> cmd, BukkitCommandConfig config) {
         Player player = sender instanceof Player ? ((Player) sender) : null;
-        String locale = player != null ? player.getLocale() : Locale.getDefault().getLanguage().split("_")[0].toLowerCase();
+        String locale = player != null ? player.getLocale() : Locale.getDefault().toString().toLowerCase();
         Function<BukkitCommandHelp, String> formatter = config.getFormatter();
         String[] succArgs = args.length >= 1
                 ? Arrays.copyOfRange(args, 0, position)
@@ -156,7 +156,7 @@ public class BukkitCommands {
             List<String> usages = new ArrayList<>(getCommandUsages(
                     sender, label, unknown.getArguments(), unknown.getIndex(), unknown.getCommand(), config
             ));
-            if (locale.equals("ko")) {
+            if (locale.equals("ko_kr")) {
                 usages.add(String.format("'%s' 명령어는 존재하지 않습니다!", input));
             } else {
                 usages.add(String.format("Command '%s' doesn't exists!", input));
@@ -166,13 +166,13 @@ public class BukkitCommands {
             CommandFailure.ParsingFailure<A> parsingFailure = (CommandFailure.ParsingFailure<A>) failure;
             List<String> usages = new ArrayList<>();
             usages.addAll(getCommandUsages(sender, label, parsingFailure.getArguments(), parsingFailure.getIndex(), parsingFailure.getCommand(), config));
-            String message = locale.equals("ko")
+            String message = locale.equals("ko_kr")
                     ? "잘못된 명령어입니다!"
                     : "Wrong command!";
             usages.add(message);
             return usages;
         }
-        String message = locale.equals("ko")
+        String message = locale.equals("ko_kr")
                 ? "잘못된 명령어입니다!"
                 : "Wrong command!";
         return Collections.singletonList(message);

@@ -22,7 +22,7 @@ public class BukkitControlFlows {
         if (sender instanceof Player) {
             return ((Player) sender);
         } else {
-            String message = Locale.getDefault().getLanguage().equals("ko")
+            String message = Locale.getDefault().getLanguage().equals("ko_kr")
                     ? "§c게임에 접속해서 사용해주세요!"
                     : "§cIngame player only!";
             throw new CommandCancellationException(message);
@@ -34,7 +34,7 @@ public class BukkitControlFlows {
         if (handItem != null && handItem.getType() != Material.AIR) {
             return handItem;
         }
-        String message = Locale.getDefault().getLanguage().equals("ko")
+        String message = Locale.getDefault().getLanguage().equals("ko_kr")
                 ? "§c손에 아이템을 들어주세요!"
                 : "§cPlease hold an item on your main hand!";
         throw new CommandCancellationException(message);
@@ -43,7 +43,7 @@ public class BukkitControlFlows {
     static void validatePermission(Command<?> node, CommandSender sender) {
         String perm = CommandSpec.from(node).getPermission();
         if (!perm.isEmpty() && !sender.hasPermission(perm)) {
-            String message = Locale.getDefault().getLanguage().equals("ko")
+            String message = Locale.getDefault().getLanguage().equals("ko_kr")
                     ? "§c권한이 없습니다! `" + perm + "`"
                     : "§cNo permission! `" + perm + "`";
             throw new CommandCancellationException(message);

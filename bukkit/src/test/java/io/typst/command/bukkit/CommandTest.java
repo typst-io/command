@@ -33,7 +33,7 @@ public class CommandTest {
     @Test
     public void help() {
         StringBuilder output = new StringBuilder();
-        MockPlayer player = new MockPlayer(new MockSender(output), "ko", UUID.randomUUID());
+        MockPlayer player = new MockPlayer(new MockSender(output), "ko_kr", UUID.randomUUID());
         List<String> msgs = BukkitCommands.getCommandUsages(
                 player,
                 "mycmd",
@@ -57,7 +57,7 @@ public class CommandTest {
     @Test
     public void helpFallback() {
         StringBuilder output = new StringBuilder();
-        MockPlayer player = new MockPlayer(new MockSender(output), "ko", UUID.randomUUID());
+        MockPlayer player = new MockPlayer(new MockSender(output), "ko_kr", UUID.randomUUID());
         List<String> msgs = BukkitCommands.getCommandUsages(
                 player,
                 "mycmd",
@@ -77,7 +77,7 @@ public class CommandTest {
     @Test
     public void helpSingle() {
         StringBuilder output = new StringBuilder();
-        MockPlayer player = new MockPlayer(new MockSender(output), "ko", UUID.randomUUID());
+        MockPlayer player = new MockPlayer(new MockSender(output), "ko_kr", UUID.randomUUID());
         BukkitCommands.execute(player, "mycmd", new String[]{"d"}, command, BukkitCommandConfig.empty);
         Assertions.assertEquals(" \n/mycmd d (문자열) (정수) - desc\n잘못된 명령어입니다!\n", output.toString());
         System.out.println(output);
@@ -86,7 +86,7 @@ public class CommandTest {
     @Test
     public void tabCompleteOnArgThatNoPermission() {
         StringBuilder output = new StringBuilder();
-        MockPlayer player = new MockPlayer(new MockSender(output), "ko", UUID.randomUUID());
+        MockPlayer player = new MockPlayer(new MockSender(output), "ko_kr", UUID.randomUUID());
         List<String> completes = BukkitCommands.tabComplete(player, new String[]{"f", ""}, command, (sender, x) -> Collections.emptyList());
         Assertions.assertEquals(Collections.emptyList(), completes);
     }

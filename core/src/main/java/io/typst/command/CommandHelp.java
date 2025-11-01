@@ -21,7 +21,7 @@ public class CommandHelp {
         List<String> args = help.getArguments();
         String argSuffix;
         String space = args.isEmpty() ? "" : " ";
-        if (help.getLanguage().equals("ko")) {
+        if (help.getLanguage().equals("ko_kr")) {
             argSuffix = spec.getArguments().stream().anyMatch(arg -> !arg.getName().isEmpty())
                     ? space + "§e" + spec.getArguments().stream()
                     .map(s -> String.format("(%s)", translateToKor(s.getName())))
