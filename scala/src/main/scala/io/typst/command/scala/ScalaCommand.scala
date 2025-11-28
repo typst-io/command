@@ -1,10 +1,9 @@
 package io.typst.command.scala
 
 import io.typst.command.Command.{Mapping, Parser}
-import io.typst.command.{Argument, Command, ParseContext, StandardArguments, algebra}
 import io.typst.command.algebra.Tuple2
+import io.typst.command.{Argument, Command, StandardArguments}
 
-import java.util
 import java.util.{Collections, Optional}
 import scala.jdk.CollectionConverters.ListHasAsScala
 import scala.jdk.OptionConverters.RichOption
@@ -13,8 +12,8 @@ trait ScalaCommand {
   implicit val strArg: Argument[String] = StandardArguments.strArg
   implicit val intArg: Argument[Int] = Argument.ofUnary("int", classOf[Int], (s: String) => s.toIntOption.toJava, () => Collections.emptyList())
   implicit val longArg: Argument[Long] = Argument.ofUnary("long", classOf[Long], (s: String) => s.toLongOption.toJava, () => Collections.emptyList())
-  implicit val floatArg: Argument[Float] = Argument.ofUnary("float",classOf[Float], (s: String) => s.toFloatOption.toJava, () => Collections.emptyList())
-  implicit val doubleArg: Argument[Double] = Argument.ofUnary("double", classOf[Double],(s: String) => s.toDoubleOption.toJava, () => Collections.emptyList())
+  implicit val floatArg: Argument[Float] = Argument.ofUnary("float", classOf[Float], (s: String) => s.toFloatOption.toJava, () => Collections.emptyList())
+  implicit val doubleArg: Argument[Double] = Argument.ofUnary("double", classOf[Double], (s: String) => s.toDoubleOption.toJava, () => Collections.emptyList())
   implicit val boolArg: Argument[Boolean] = Argument.ofUnary("bool", classOf[Boolean], (s: String) => s.toBooleanOption.toJava, () => Collections.emptyList())
   implicit val strsArg: Argument[Seq[String]] = Argument.of(
     "strs",
