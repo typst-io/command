@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Gradle Imported" enabled="true">
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.38/57f8f5e02e92a30fd21b80cbd426a4172b5f8e29/lombok-1.18.38.jar" />
+        </processorPath>
+        <module name="io.typst.command.command-bukkit.main" />
+        <module name="io.typst.command.command-core.main" />
+        <module name="io.typst.command.command-core.test" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="build-logic.main" target="21" />
+      <module name="build-logic.test" target="21" />
+      <module name="io.typecraft.command.command-core.test" target="8" />
+      <module name="io.typecraft.command.command-kotlin.main" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
