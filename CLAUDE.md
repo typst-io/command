@@ -117,3 +117,7 @@ Publishing is configured in root `build.gradle` with the `registerPublish()` hel
   ```
 
 Version is set in root `build.gradle` (`version = '3.1.6'`). Update this for releases.
+
+## External library notes
+
+- Mojang Brigadier: @~/.claude/docs/brigadier.md
