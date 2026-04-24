@@ -39,6 +39,26 @@ public class BukkitCommands {
     }
 
     /**
+     * Register a command with simple usage and custom config
+     *
+     * @param <A>         The result of the command
+     * @param commandName The main name of the command
+     * @param command     The node of the command
+     * @param executor    The executor of the command
+     * @param config      The configuration for the command
+     * @param plugin      The plugin that depends on the command
+     */
+    public static <A> void register(
+            String commandName,
+            Command<A> command,
+            BiConsumer<CommandSender, A> executor,
+            BukkitCommandConfig config,
+            JavaPlugin plugin
+    ) {
+        registerPrime(commandName, command, executor, (sender, a) -> Collections.emptyList(), config, plugin);
+    }
+
+    /**
      * Register a command
      *
      * @param <A>          The result of the command
@@ -156,25 +176,26 @@ public class BukkitCommands {
             List<String> usages = new ArrayList<>(getCommandUsages(
                     sender, label, unknown.getArguments(), unknown.getIndex(), unknown.getCommand(), config
             ));
-            if (locale.equals("ko_kr")) {
-                usages.add(String.format("'%s' 명령어는 존재하지 않습니다!", input));
-            } else {
-                usages.add(String.format("Command '%s' doesn't exists!", input));
-            }
+            String unknownMsg = config.getUnknownSubCommandMessage() != null
+                    ? String.format(config.getUnknownSubCommandMessage(), input)
+                    : (locale.equals("ko_kr")
+                            ? String.format("'%s' 명령어는 존재하지 않습니다!", input)
+                            : String.format("Command '%s' doesn't exists!", input));
+            usages.add(unknownMsg);
             return usages;
         } else if (failure instanceof CommandFailure.ParsingFailure) {
             CommandFailure.ParsingFailure<A> parsingFailure = (CommandFailure.ParsingFailure<A>) failure;
             List<String> usages = new ArrayList<>();
             usages.addAll(getCommandUsages(sender, label, parsingFailure.getArguments(), parsingFailure.getIndex(), parsingFailure.getCommand(), config));
-            String message = locale.equals("ko_kr")
-                    ? "잘못된 명령어입니다!"
-                    : "Wrong command!";
+            String message = config.getInvalidCommandMessage() != null
+                    ? config.getInvalidCommandMessage()
+                    : (locale.equals("ko_kr") ? "잘못된 명령어입니다!" : "Wrong command!");
             usages.add(message);
             return usages;
         }
-        String message = locale.equals("ko_kr")
-                ? "잘못된 명령어입니다!"
-                : "Wrong command!";
+        String message = config.getInvalidCommandMessage() != null
+                ? config.getInvalidCommandMessage()
+                : (locale.equals("ko_kr") ? "잘못된 명령어입니다!" : "Wrong command!");
         return Collections.singletonList(message);
     }
 
