@@ -167,6 +167,7 @@ public class BukkitCommands {
 
     private static <A> List<String> getFailureMessage(CommandSender sender, String label, CommandFailure<A> failure, BukkitCommandConfig config) {
         String locale = BukkitControlFlows.getLocale(sender);
+        LangKey langKey = LangKey.getLanguageKeyFrom(locale);
         if (failure instanceof CommandFailure.FewArguments) {
             CommandFailure.FewArguments<A> fewArgs = (CommandFailure.FewArguments<A>) failure;
             return getCommandUsages(sender, label, fewArgs.getArguments(), fewArgs.getIndex(), fewArgs.getCommand(), config);
@@ -176,26 +177,18 @@ public class BukkitCommands {
             List<String> usages = new ArrayList<>(getCommandUsages(
                     sender, label, unknown.getArguments(), unknown.getIndex(), unknown.getCommand(), config
             ));
-            String unknownMsg = config.getUnknownSubCommandMessage() != null
-                    ? String.format(config.getUnknownSubCommandMessage(), input)
-                    : (locale.equals("ko_kr")
-                            ? String.format("'%s' 명령어는 존재하지 않습니다!", input)
-                            : String.format("Command '%s' doesn't exists!", input));
+            String unknownMsg = config.formatMessage(langKey, MessageKey.UNKNOWN_SUB_COMMAND, input);
             usages.add(unknownMsg);
             return usages;
         } else if (failure instanceof CommandFailure.ParsingFailure) {
             CommandFailure.ParsingFailure<A> parsingFailure = (CommandFailure.ParsingFailure<A>) failure;
             List<String> usages = new ArrayList<>();
             usages.addAll(getCommandUsages(sender, label, parsingFailure.getArguments(), parsingFailure.getIndex(), parsingFailure.getCommand(), config));
-            String message = config.getInvalidCommandMessage() != null
-                    ? config.getInvalidCommandMessage()
-                    : (locale.equals("ko_kr") ? "잘못된 명령어입니다!" : "Wrong command!");
+            String message = config.formatMessage(langKey, MessageKey.INVALID_COMMAND);
             usages.add(message);
             return usages;
         }
-        String message = config.getInvalidCommandMessage() != null
-                ? config.getInvalidCommandMessage()
-                : (locale.equals("ko_kr") ? "잘못된 명령어입니다!" : "Wrong command!");
+        String message = config.formatMessage(langKey, MessageKey.INVALID_COMMAND);
         return Collections.singletonList(message);
     }
 

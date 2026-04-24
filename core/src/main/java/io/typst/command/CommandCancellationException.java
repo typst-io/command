@@ -13,24 +13,31 @@ import java.util.concurrent.CancellationException;
 public class CommandCancellationException extends CancellationException {
     @Nullable
     private final CommandFailure<?> failure;
+    @Nullable
+    private final MessageKey messageKey;
+    private Object[] messageArgs = new Object[0];
 
     public CommandCancellationException() {
         this.failure = null;
+        this.messageKey = null;
     }
 
     public CommandCancellationException(String message) {
         super(message);
         this.failure = null;
+        this.messageKey = null;
     }
 
-    public CommandCancellationException(CommandFailure<?> failure) {
+    public CommandCancellationException(@Nullable CommandFailure<?> failure) {
         super(formatMessage(failure));
         this.failure = failure;
+        this.messageKey = null;
     }
 
-    public CommandCancellationException(String message, CommandFailure<?> failure) {
-        super(message);
-        this.failure = failure;
+    public CommandCancellationException(MessageKey messageKey) {
+        super(messageKey.getDefaultMessage());
+        this.failure = null;
+        this.messageKey = messageKey;
     }
 
     /**
@@ -77,5 +84,13 @@ public class CommandCancellationException extends CancellationException {
             return "Unknown subcommand at index " + us.getIndex();
         }
         return "Command parsing failed";
+    }
+
+    public void setMessageArgs(Object[] messageArgs) {
+        this.messageArgs = messageArgs;
+    }
+
+    public Object[] getMessageArgs() {
+        return messageArgs;
     }
 }

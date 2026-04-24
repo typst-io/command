@@ -5,14 +5,4 @@
       <sourceFolder url="file://$MODULE_DIR$/../../../bukkit/build/generated/sources/annotationProcessor/java/main" isTestSource="false" generated="true" />
     </content>
   </component>
-  <component name="FacetManager">
-    <facet type="minecraft" name="Minecraft">
-      <configuration>
-        <autoDetectTypes>
-          <platformType>SPIGOT</platformType>
-        </autoDetectTypes>
-        <projectReimportVersion>1</projectReimportVersion>
-      </configuration>
-    </facet>
-  </component>
 </module>
