@@ -215,7 +215,14 @@ public class BukkitCommands {
                 execute(sender, label, args, command, config)
                         .ifPresent(succ -> executor.accept(sender, succ.getCommand()));
             } catch (CommandCancellationException ex) {
-                sender.sendMessage(ex.getMessage());
+                MessageKey messageKey = ex.getMessageKey();
+                if (messageKey != null) {
+                    String locale = BukkitControlFlows.getLocale(sender);
+                    LangKey langKey = LangKey.getLanguageKeyFrom(locale);
+                    sender.sendMessage(config.formatMessage(langKey, messageKey, ex.getMessageArgs()));
+                } else  {
+                    sender.sendMessage(ex.getMessage());
+                }
             }
             return true;
         }
