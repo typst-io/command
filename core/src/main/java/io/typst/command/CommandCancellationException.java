@@ -1,5 +1,7 @@
 package io.typst.command;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CancellationException;
@@ -13,24 +15,34 @@ import java.util.concurrent.CancellationException;
 public class CommandCancellationException extends CancellationException {
     @Nullable
     private final CommandFailure<?> failure;
+    @Nullable
+    @Getter
+    private final MessageKey messageKey;
+    @Setter
+    @Getter
+    private Object[] messageArgs = new Object[0];
 
     public CommandCancellationException() {
         this.failure = null;
+        this.messageKey = null;
     }
 
     public CommandCancellationException(String message) {
         super(message);
         this.failure = null;
+        this.messageKey = null;
     }
 
-    public CommandCancellationException(CommandFailure<?> failure) {
+    public CommandCancellationException(@Nullable CommandFailure<?> failure) {
         super(formatMessage(failure));
         this.failure = failure;
+        this.messageKey = null;
     }
 
-    public CommandCancellationException(String message, CommandFailure<?> failure) {
-        super(message);
-        this.failure = failure;
+    public CommandCancellationException(MessageKey messageKey) {
+        super(messageKey.getDefaultMessage());
+        this.failure = null;
+        this.messageKey = messageKey;
     }
 
     /**
@@ -78,4 +90,5 @@ public class CommandCancellationException extends CancellationException {
         }
         return "Command parsing failed";
     }
+
 }

@@ -3,6 +3,8 @@ package io.typst.command.bukkit
 import io.typst.command.Argument
 import io.typst.command.Command
 import io.typst.command.Command.pair
+import io.typst.command.LangKey
+import io.typst.command.MessageKey
 import io.typst.command.StandardArguments.intArg
 import io.typst.command.StandardArguments.strArg
 import org.assertj.core.api.Assertions.assertThat
@@ -101,5 +103,17 @@ class BukkitCommandTest {
         ) { _, _ -> emptyList() }
 
         assertThat(completes).isEmpty()
+    }
+
+    @Test
+    fun `custom error message`() {
+        val msg = "명령어 오사용"
+        val config = BukkitCommandConfig.empty
+            .withMessage(LangKey.KOREAN, MessageKey.INVALID_COMMAND, msg)
+        BukkitCommands.execute(player, "mycmd", arrayOf("d"), command, config)
+
+        val output = messages.joinToString("\n")
+        assertThat(output).contains("/mycmd d (문자열) (정수) - desc")
+        assertThat(output).contains(msg)
     }
 }

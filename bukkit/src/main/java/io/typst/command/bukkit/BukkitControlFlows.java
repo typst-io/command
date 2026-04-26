@@ -1,31 +1,24 @@
 package io.typst.command.bukkit;
 
-import io.typst.command.Command;
-import io.typst.command.CommandCancellationException;
-import io.typst.command.CommandSpec;
+import io.typst.command.*;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Locale;
-
 public class BukkitControlFlows {
-    public static String getLocale(CommandSender sender) {
+    public static LangKey getLocale(CommandSender sender) {
         if (sender instanceof Player) {
-            return ((Player) sender).getLocale();
+            return LangKey.getLanguageKeyFrom(((Player) sender).getLocale());
         }
-        return Locale.getDefault().getLanguage();
+        return LangKey.getJVMDefaultLanguage();
     }
 
     public static Player getPlayerOrThrow(CommandSender sender) {
         if (sender instanceof Player) {
             return ((Player) sender);
         } else {
-            String message = Locale.getDefault().getLanguage().equals("ko_kr")
-                    ? "§c게임에 접속해서 사용해주세요!"
-                    : "§cIngame player only!";
-            throw new CommandCancellationException(message);
+            throw new CommandCancellationException(MessageKey.INGAME_PLAYER_ONLY);
         }
     }
 
@@ -34,19 +27,15 @@ public class BukkitControlFlows {
         if (handItem != null && handItem.getType() != Material.AIR) {
             return handItem;
         }
-        String message = Locale.getDefault().getLanguage().equals("ko_kr")
-                ? "§c손에 아이템을 들어주세요!"
-                : "§cPlease hold an item on your main hand!";
-        throw new CommandCancellationException(message);
+        throw new CommandCancellationException(MessageKey.NO_ITEM_IN_MAIN_HAND);
     }
 
     static void validatePermission(Command<?> node, CommandSender sender) {
         String perm = CommandSpec.from(node).getPermission();
         if (!perm.isEmpty() && !sender.hasPermission(perm)) {
-            String message = Locale.getDefault().getLanguage().equals("ko_kr")
-                    ? "§c권한이 없습니다! `" + perm + "`"
-                    : "§cNo permission! `" + perm + "`";
-            throw new CommandCancellationException(message);
+            CommandCancellationException th = new CommandCancellationException(MessageKey.NO_PERMISSION);
+            th.setMessageArgs(new Object[]{perm});
+            throw th;
         }
     }
 }

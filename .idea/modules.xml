@@ -2,13 +2,13 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/build-logic/publish/build-logic.publish.main.iml" filepath="$PROJECT_DIR$/.idea/modules/build-logic/publish/build-logic.publish.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/brigadier/command.command-brigadier.main.iml" filepath="$PROJECT_DIR$/.idea/modules/brigadier/command.command-brigadier.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/bukkit/bukkit.command.command-bukkit.main.iml" filepath="$PROJECT_DIR$/.idea/modules/bukkit/bukkit.command.command-bukkit.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/bukkit/command.command-bukkit.main.iml" filepath="$PROJECT_DIR$/.idea/modules/bukkit/command.command-bukkit.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/bukkit/command.command-bukkit.test.iml" filepath="$PROJECT_DIR$/.idea/modules/bukkit/command.command-bukkit.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/command.command-core.main.iml" filepath="$PROJECT_DIR$/.idea/modules/core/command.command-core.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/command.command-core.test.iml" filepath="$PROJECT_DIR$/.idea/modules/core/command.command-core.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/kotlin/command.command-kotlin.main.iml" filepath="$PROJECT_DIR$/.idea/modules/kotlin/command.command-kotlin.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/core.command.command-core.main.iml" filepath="$PROJECT_DIR$/.idea/modules/core/core.command.command-core.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/bukkit/io.typecraft.command.command-bukkit.main.iml" filepath="$PROJECT_DIR$/.idea/modules/bukkit/io.typecraft.command.command-bukkit.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/bukkit/io.typecraft.command.command-bukkit.test.iml" filepath="$PROJECT_DIR$/.idea/modules/bukkit/io.typecraft.command.command-bukkit.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/io.typecraft.command.command-core.main.iml" filepath="$PROJECT_DIR$/.idea/modules/core/io.typecraft.command.command-core.main.iml" />

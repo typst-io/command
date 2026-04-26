@@ -1,7 +1,7 @@
 package io.typst.command.bukkit;
 
-import io.typst.command.Command;
 import io.typst.command.*;
+import io.typst.command.Command;
 import io.typst.command.algebra.Either;
 import lombok.experimental.UtilityClass;
 import org.bukkit.command.*;
@@ -36,6 +36,26 @@ public class BukkitCommands {
             JavaPlugin plugin
     ) {
         registerPrime(commandName, command, executor, (sender, a) -> Collections.emptyList(), BukkitCommandConfig.empty, plugin);
+    }
+
+    /**
+     * Register a command with simple usage and custom config
+     *
+     * @param <A>         The result of the command
+     * @param commandName The main name of the command
+     * @param command     The node of the command
+     * @param executor    The executor of the command
+     * @param config      The configuration for the command
+     * @param plugin      The plugin that depends on the command
+     */
+    public static <A> void register(
+            String commandName,
+            Command<A> command,
+            BiConsumer<CommandSender, A> executor,
+            BukkitCommandConfig config,
+            JavaPlugin plugin
+    ) {
+        registerPrime(commandName, command, executor, (sender, a) -> Collections.emptyList(), config, plugin);
     }
 
     /**
@@ -133,11 +153,11 @@ public class BukkitCommands {
                     }
                     List<String> usageArgs = theArgs.size() >= 1
                             ? theArgs.stream()
-                            .flatMap(s -> Stream.concat(
-                                    Arrays.stream(succArgs),
-                                    Stream.of(s)
-                            ))
-                            .collect(Collectors.toList())
+                              .flatMap(s -> Stream.concat(
+                                      Arrays.stream(succArgs),
+                                      Stream.of(s)
+                              ))
+                              .collect(Collectors.toList())
                             : Arrays.asList(succArgs);
                     String line = formatter.apply(BukkitCommandHelp.of(sender, label, usageArgs, spec, locale));
                     return line.isEmpty() ? Stream.empty() : Stream.of(line);
@@ -146,7 +166,7 @@ public class BukkitCommands {
     }
 
     private static <A> List<String> getFailureMessage(CommandSender sender, String label, CommandFailure<A> failure, BukkitCommandConfig config) {
-        String locale = BukkitControlFlows.getLocale(sender);
+        LangKey langKey = BukkitControlFlows.getLocale(sender);
         if (failure instanceof CommandFailure.FewArguments) {
             CommandFailure.FewArguments<A> fewArgs = (CommandFailure.FewArguments<A>) failure;
             return getCommandUsages(sender, label, fewArgs.getArguments(), fewArgs.getIndex(), fewArgs.getCommand(), config);
@@ -156,25 +176,18 @@ public class BukkitCommands {
             List<String> usages = new ArrayList<>(getCommandUsages(
                     sender, label, unknown.getArguments(), unknown.getIndex(), unknown.getCommand(), config
             ));
-            if (locale.equals("ko_kr")) {
-                usages.add(String.format("'%s' 명령어는 존재하지 않습니다!", input));
-            } else {
-                usages.add(String.format("Command '%s' doesn't exists!", input));
-            }
+            String unknownMsg = config.formatMessage(langKey, MessageKey.UNKNOWN_SUB_COMMAND, input);
+            usages.add(unknownMsg);
             return usages;
         } else if (failure instanceof CommandFailure.ParsingFailure) {
             CommandFailure.ParsingFailure<A> parsingFailure = (CommandFailure.ParsingFailure<A>) failure;
             List<String> usages = new ArrayList<>();
             usages.addAll(getCommandUsages(sender, label, parsingFailure.getArguments(), parsingFailure.getIndex(), parsingFailure.getCommand(), config));
-            String message = locale.equals("ko_kr")
-                    ? "잘못된 명령어입니다!"
-                    : "Wrong command!";
+            String message = config.formatMessage(langKey, MessageKey.INVALID_COMMAND);
             usages.add(message);
             return usages;
         }
-        String message = locale.equals("ko_kr")
-                ? "잘못된 명령어입니다!"
-                : "Wrong command!";
+        String message = config.formatMessage(langKey, MessageKey.INVALID_COMMAND);
         return Collections.singletonList(message);
     }
 
@@ -201,7 +214,13 @@ public class BukkitCommands {
                 execute(sender, label, args, command, config)
                         .ifPresent(succ -> executor.accept(sender, succ.getCommand()));
             } catch (CommandCancellationException ex) {
-                sender.sendMessage(ex.getMessage());
+                MessageKey messageKey = ex.getMessageKey();
+                if (messageKey != null) {
+                    LangKey langKey = BukkitControlFlows.getLocale(sender);
+                    sender.sendMessage(config.formatMessage(langKey, messageKey, ex.getMessageArgs()));
+                } else {
+                    sender.sendMessage(ex.getMessage());
+                }
             }
             return true;
         }

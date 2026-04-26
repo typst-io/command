@@ -31,7 +31,7 @@ object ScalaCommand extends ScalaCommand {
     for ((pair, i) <- pairs.zipWithIndex) {
       tcPairs.update(i, new Tuple2(pair._1, pair._2))
     }
-    Command.mapping(tcPairs: _*)
+    Command.mapping(tcPairs*)
   }
 
   def argument[T, A](f: A => T)(implicit argument: Argument[A]): Parser[T] = Command.argument((a: A) => f(a), argument)
