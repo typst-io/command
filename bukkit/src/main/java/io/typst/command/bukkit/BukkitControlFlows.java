@@ -1,22 +1,17 @@
 package io.typst.command.bukkit;
 
-import io.typst.command.Command;
-import io.typst.command.CommandCancellationException;
-import io.typst.command.CommandSpec;
-import io.typst.command.MessageKey;
+import io.typst.command.*;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Locale;
-
 public class BukkitControlFlows {
-    public static String getLocale(CommandSender sender) {
+    public static LangKey getLocale(CommandSender sender) {
         if (sender instanceof Player) {
-            return ((Player) sender).getLocale();
+            return LangKey.getLanguageKeyFrom(((Player) sender).getLocale());
         }
-        return Locale.getDefault().getLanguage();
+        return LangKey.getJVMDefaultLanguage();
     }
 
     public static Player getPlayerOrThrow(CommandSender sender) {

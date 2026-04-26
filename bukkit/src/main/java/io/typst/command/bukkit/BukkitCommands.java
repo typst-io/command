@@ -1,7 +1,7 @@
 package io.typst.command.bukkit;
 
-import io.typst.command.Command;
 import io.typst.command.*;
+import io.typst.command.Command;
 import io.typst.command.algebra.Either;
 import lombok.experimental.UtilityClass;
 import org.bukkit.command.*;
@@ -153,11 +153,11 @@ public class BukkitCommands {
                     }
                     List<String> usageArgs = theArgs.size() >= 1
                             ? theArgs.stream()
-                            .flatMap(s -> Stream.concat(
-                                    Arrays.stream(succArgs),
-                                    Stream.of(s)
-                            ))
-                            .collect(Collectors.toList())
+                              .flatMap(s -> Stream.concat(
+                                      Arrays.stream(succArgs),
+                                      Stream.of(s)
+                              ))
+                              .collect(Collectors.toList())
                             : Arrays.asList(succArgs);
                     String line = formatter.apply(BukkitCommandHelp.of(sender, label, usageArgs, spec, locale));
                     return line.isEmpty() ? Stream.empty() : Stream.of(line);
@@ -166,8 +166,7 @@ public class BukkitCommands {
     }
 
     private static <A> List<String> getFailureMessage(CommandSender sender, String label, CommandFailure<A> failure, BukkitCommandConfig config) {
-        String locale = BukkitControlFlows.getLocale(sender);
-        LangKey langKey = LangKey.getLanguageKeyFrom(locale);
+        LangKey langKey = BukkitControlFlows.getLocale(sender);
         if (failure instanceof CommandFailure.FewArguments) {
             CommandFailure.FewArguments<A> fewArgs = (CommandFailure.FewArguments<A>) failure;
             return getCommandUsages(sender, label, fewArgs.getArguments(), fewArgs.getIndex(), fewArgs.getCommand(), config);
@@ -217,10 +216,9 @@ public class BukkitCommands {
             } catch (CommandCancellationException ex) {
                 MessageKey messageKey = ex.getMessageKey();
                 if (messageKey != null) {
-                    String locale = BukkitControlFlows.getLocale(sender);
-                    LangKey langKey = LangKey.getLanguageKeyFrom(locale);
+                    LangKey langKey = BukkitControlFlows.getLocale(sender);
                     sender.sendMessage(config.formatMessage(langKey, messageKey, ex.getMessageArgs()));
-                } else  {
+                } else {
                     sender.sendMessage(ex.getMessage());
                 }
             }

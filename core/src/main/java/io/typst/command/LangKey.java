@@ -41,8 +41,11 @@ public enum LangKey {
     }
 
     public static LangKey getLanguageKeyFrom(String xs) {
+        String head = xs.contains("_")
+                ? xs.substring(0, xs.indexOf("_"))
+                : xs;
         return Arrays.stream(values())
-                .filter(lang -> lang.key.equalsIgnoreCase(xs))
+                .filter(lang -> lang.key.equalsIgnoreCase(head))
                 .findFirst()
                 .orElse(ENGLISH);
     }
@@ -60,7 +63,7 @@ public enum LangKey {
         }
     }
 
-    public LangKey getJVMDefaultLanguage() {
+    public static LangKey getJVMDefaultLanguage() {
         return Locale.getDefault().getLanguage().equals("ko_kr") ? KOREAN : ENGLISH;
     }
 }
