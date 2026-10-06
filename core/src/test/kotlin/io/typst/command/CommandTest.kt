@@ -1,13 +1,16 @@
 package io.typst.command
 
+import io.typst.command.algebra.Either
 import io.typst.command.Command.pair
+import io.typst.command.StandardArguments.boolArg
 import io.typst.command.StandardArguments.intArg
 import io.typst.command.StandardArguments.strArg
-import io.typst.command.algebra.Either
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
 import java.util.*
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.parallel.ResourceLock
+import org.junit.jupiter.api.Test
 
+@ResourceLock("java.util.Locale.default")
 class CommandTest {
 
     sealed interface MyCommand
@@ -263,5 +266,109 @@ class CommandTest {
 
         assertThat(entries).isNotEmpty
         assertThat(entries.map { it.key }).contains(listOf("open"))
+    }
+
+    @Test
+    fun `accept both valid boolean values`() {
+        val command = Command.argument({ enabled: Boolean -> enabled }, boolArg)
+
+        assertThat(Command.parseO(arrayOf("true"), command)).contains(true)
+        assertThat(Command.parseO(arrayOf("false"), command)).contains(false)
+    }
+
+    @Test
+    fun `accept null result from a two argument command`() {
+        val command: Command.Parser<Void?> = Command.argument({ _: String, _: Int -> null }, strArg, intArg)
+        val args = arrayOf("item", "42")
+
+        val result = Command.parse(args, command)
+
+        assertThat(result).isEqualTo(
+            Either.Right<CommandFailure<Void?>, CommandSuccess<Void?>>(
+                CommandSuccess(args, args.size, null, command)
+            )
+        )
+    }
+
+    @Test
+    fun `null result is already supported for zero and one argument commands`() {
+        val present: Command.Parser<Void?> = Command.present(null)
+        val unary: Command.Parser<Void?> = Command.argument({ _: String -> null }, strArg)
+
+        assertThat(Command.parse(emptyArray(), present)).isInstanceOf(Either.Right::class.java)
+        assertThat(Command.parse(arrayOf("item"), unary)).isInstanceOf(Either.Right::class.java)
+    }
+
+    @Test
+    fun `complete the next argument of a fallback command`() {
+        val nameArg = strArg.withTabCompletes { listOf("diamond", "dirt") }
+        val fallback = Command.argument({ index: Int, name: String -> pair(index, name) }, intArg, nameArg)
+        val command = Command.mapping(pair("named", Command.present(pair(0, "named"))))
+            .withFallback(fallback)
+
+        val result = Command.tabComplete(arrayOf("42", "di"), command) as CommandTabResult.Suggestions
+
+        assertThat(result.suggestions.map { it.a }).containsExactly("diamond", "dirt")
+    }
+
+    @Test
+    fun `use Korean messages when the JVM default locale is Korean`() {
+        val previousLocale = Locale.getDefault()
+        try {
+            Locale.setDefault(Locale.KOREA)
+
+            assertThat(LangKey.getJVMDefaultLanguage()).isEqualTo(LangKey.KOREAN)
+        } finally {
+            Locale.setDefault(previousLocale)
+        }
+    }
+
+    @Test
+    fun `match command completion prefixes independently of the JVM locale`() {
+        val previousLocale = Locale.getDefault()
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"))
+            val command = Command.mapping(pair("item", Command.present("item")))
+
+            val result = Command.tabComplete(arrayOf("I"), command) as CommandTabResult.Suggestions
+
+            assertThat(result.suggestions.map { it.a }).containsExactly("item")
+        } finally {
+            Locale.setDefault(previousLocale)
+        }
+    }
+
+    @Test
+    fun `match argument completion prefixes independently of the JVM locale`() {
+        val previousLocale = Locale.getDefault()
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"))
+            val argument = strArg.withTabCompletes { listOf("item", "IRON", "stone") }
+            val command = Command.argument({ value: String -> value }, argument)
+
+            for (prefix in listOf("I", "i")) {
+                val result = Command.tabComplete(arrayOf(prefix), command) as CommandTabResult.Suggestions
+
+                assertThat(result.suggestions.map { it.a }).containsExactly("item", "IRON")
+            }
+        } finally {
+            Locale.setDefault(previousLocale)
+        }
+    }
+
+    @Test
+    fun `use Korean without a country and fall back to English for unsupported JVM languages`() {
+        val previousLocale = Locale.getDefault()
+        try {
+            Locale.setDefault(Locale.KOREAN)
+            assertThat(LangKey.getJVMDefaultLanguage()).isEqualTo(LangKey.KOREAN)
+
+            for (locale in listOf(Locale.ENGLISH, Locale.FRENCH)) {
+                Locale.setDefault(locale)
+                assertThat(LangKey.getJVMDefaultLanguage()).isEqualTo(LangKey.ENGLISH)
+            }
+        } finally {
+            Locale.setDefault(previousLocale)
+        }
     }
 }

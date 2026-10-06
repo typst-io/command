@@ -34,7 +34,7 @@ allprojects {
     pluginManager.apply("java-base")
 
     group = "io.typst"
-    version = "3.2.0"
+    version = "3.3.0"
 
     extensions.configure<JavaPluginExtension> {
         toolchain {

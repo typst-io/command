@@ -20,7 +20,7 @@ trait ScalaCommand {
     classOf[Seq[String]],
     (args: java.util.List[String]) => new Tuple2(Optional.of(args.asScala.toSeq), Collections.emptyList()),
     () => Collections.emptyList()
-  )
+  ).withOptional(true).withGreedy(true)
 }
 
 object ScalaCommand extends ScalaCommand {

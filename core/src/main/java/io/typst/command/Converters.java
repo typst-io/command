@@ -55,7 +55,9 @@ public class Converters {
     public static <K, V> Optional<Map<K, V>> toMapAs(Function<Tuple2<Object, Object>, Tuple2<K, V>> f, Object o) {
         return asMap(o).map(m -> m.entrySet().stream()
                 .map(pair -> f.apply(new Tuple2<>(pair.getKey(), pair.getValue())))
-                .collect(Collectors.toMap(Tuple2::getA, Tuple2::getB, (a, b) -> b, LinkedHashMap::new)));
+                .collect(() -> new LinkedHashMap<K, V>(),
+                        (map, pair) -> map.put(pair.getA(), pair.getB()),
+                        Map::putAll));
     }
 
     @SuppressWarnings("unchecked") // covariant

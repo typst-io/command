@@ -59,6 +59,41 @@ if (algebra instanceof MyCommand.AddItem) {
 }
 ```
 
+## Core
+
+`Command.parse` accepts a successful result of `null` for every supported argument count (zero through seven), retains the parsed command node and consumed token index, and allows `map` to transform that result. Result factories are called only when every argument parses successfully. `Command.parseO` returns an empty `Optional` for a successful null result; use `Command.parse` to distinguish that case from a parsing failure.
+
+Command and argument completion match prefixes case-insensitively using `Locale.ROOT`, independently of the JVM default locale, while preserving the original suggestion text. Default messages use the JVM language code: Korean locales use Korean messages, and unsupported languages fall back to English.
+
+## Bukkit
+
+`BukkitCommands.execute` resolves the selected command path and checks its permission before invoking argument parsers or result factories. The returned success retains the original command node. Sender-based tab completion applies the same permission check before argument completion or result parsing, and checks permission before calling the custom completer. A denied named command remains selected and cannot fall through to an allowed fallback.
+
+The final element in Bukkit's completion arguments is the current partial token. While a declared argument is being entered, its argument completer owns completion. Once the declared arguments are supplied, the preceding tokens are parsed and the `registerPrime` custom completer receives the result. Invalid preceding input yields no custom completions; greedy arguments continue completing their current token.
+
+Generated help includes named and fallback commands. `hideNoPermissionCommands` controls visibility before formatting; set it to `false` to display restricted command help. `BukkitCommandHelp.format` formats the supplied help without an additional permission filter, so direct callers should apply their visibility policy themselves. YAML normalization preserves null values, nested maps and collections, and insertion order.
+
+Help sent to players by `BukkitCommands.execute` is clickable: each line uses the [Spigot Chat Component API](https://www.spigotmc.org/wiki/the-chat-component-api/) with `SUGGEST_COMMAND` to fill the chat input with the invoked command label and subcommand path. Commands accepting arguments include a trailing space for further input; argument placeholders and descriptions are excluded. Custom formatter text and colors are preserved. Console help and error messages remain plain text.
+
+## Brigadier
+
+Register a command tree using `BrigadierCommands.from` from the `command-brigadier` module:
+
+```java
+Command<Optional<Integer>> command = Command.argument(value -> value, intArg.asOptional());
+dispatcher.register(BrigadierCommands.from("amount", command, (source, value) -> {
+    // Both "amount" and "amount 42" execute this callback.
+}));
+```
+
+`asOptional()` allows an argument to be omitted. Brigadier creates an execution path wherever all remaining arguments are optional, and passes only the supplied tokens to the core parser. Invalid supplied input still fails parsing. `map` and argument withers preserve the optional and greedy properties.
+
+`strsArg` consumes all remaining whitespace-separated tokens, including zero tokens. A greedy argument must be last; registration rejects any other position. Quotes are literal characters in greedy tokens, so `echo "alpha beta"` supplies `["\"alpha", "beta\""]`. A single `strArg` uses Brigadier's quoted string syntax, so `name "alpha beta"` supplies one value, `alpha beta`.
+
+Custom parsers can declare these properties using `withOptional(true)` and `withGreedy(true)`. These methods describe the parser's behavior; they do not change how it parses. Set `optional` only when the parser accepts an empty token list, and `greedy` only when it consumes every remaining token. The existing four-argument `of` and `ofContext` factories remain available and default to greedy for `List.class`. `ofUnary` always consumes one token, including when its result is a list. Scala's standard `strsArg` declares the same optional and greedy behavior for `Seq[String]`.
+
+Argument completions filter candidates by the current prefix using `Locale.ROOT`. Quoted prefixes are decoded for matching, and single-value suggestions are escaped when necessary so that the inserted value can be parsed. Greedy suggestions replace only the current token. The contextual completer receives an immutable `ParseContext.args` list containing subcommand names, decoded preceding values, and the current typed fragment. The root command name and text after the completion cursor are excluded. Registration and completion do not invoke user parsers, result factories, or execution callbacks.
+
 # FAQ
 
 ## Why not just execute?

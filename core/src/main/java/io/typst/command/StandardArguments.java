@@ -32,5 +32,5 @@ public class StandardArguments {
                     List.class,
                     args -> new Tuple2<>(Optional.of(args), Collections.emptyList()),
                     Collections::emptyList
-            );
+            ).withOptional(true);
 }

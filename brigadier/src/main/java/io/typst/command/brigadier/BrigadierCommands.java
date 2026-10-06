@@ -1,6 +1,7 @@
 package io.typst.command.brigadier;
 
 import com.mojang.brigadier.LiteralMessage;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -9,7 +10,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import io.typst.command.Argument;
 import io.typst.command.Command;
@@ -18,11 +18,14 @@ import io.typst.command.CommandSource;
 import io.typst.command.ParseContext;
 import io.typst.command.algebra.Either;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import static com.mojang.brigadier.builder.LiteralArgumentBuilder.literal;
 import static com.mojang.brigadier.builder.RequiredArgumentBuilder.argument;
@@ -64,14 +67,15 @@ public class BrigadierCommands {
             Command<A> command,
             BiConsumer<S, A> executor) {
         LiteralArgumentBuilder<S> root = literal(name);
-        buildNode(root, command, executor);
+        buildNode(root, command, executor, Collections.emptyList());
         return root;
     }
 
     private static <S, A> void buildNode(
             ArgumentBuilder<S, ?> parent,
             Command<A> command,
-            BiConsumer<S, A> executor) {
+            BiConsumer<S, A> executor,
+            List<String> commandPath) {
         if (command instanceof Command.Mapping) {
             Command.Mapping<A> mapping = (Command.Mapping<A>) command;
             Map<String, Command<A>> commandMap = mapping.getCommandMap();
@@ -81,28 +85,20 @@ public class BrigadierCommands {
                 Command<A> subCommand = entry.getValue();
 
                 LiteralArgumentBuilder<S> literalNode = literal(key);
-                buildNode(literalNode, subCommand, executor);
+                List<String> subPath = new ArrayList<>(commandPath);
+                subPath.add(key);
+                buildNode(literalNode, subCommand, executor, Collections.unmodifiableList(subPath));
                 parent.then(literalNode);
             }
 
             // Handle fallback if exists
-            mapping.getFallback().ifPresent(fallback -> buildNode(parent, fallback, executor));
+            mapping.getFallback().ifPresent(fallback -> buildNode(parent, fallback, executor, commandPath));
 
         } else if (command instanceof Command.Parser) {
             Command.Parser<A> parser = (Command.Parser<A>) command;
             List<Argument<?>> arguments = parser.getArguments();
 
-            if (arguments.isEmpty()) {
-                // No arguments - just execute
-                parent.executes(ctx -> {
-                    A result = parseAndGet(ctx, parser);
-                    executor.accept(ctx.getSource(), result);
-                    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
-                });
-            } else {
-                // Build argument chain
-                buildArgumentChain(parent, parser, arguments, 0, executor);
-            }
+            buildArgumentChain(parent, parser, arguments, 0, executor, commandPath);
         }
     }
 
@@ -111,61 +107,58 @@ public class BrigadierCommands {
             Command.Parser<A> parser,
             List<Argument<?>> arguments,
             int index,
-            BiConsumer<S, A> executor) {
-        if (index >= arguments.size()) {
-            // All arguments processed - add executor
+            BiConsumer<S, A> executor,
+            List<String> commandPath) {
+        if (arguments.subList(index, arguments.size()).stream().allMatch(Argument::isOptional)) {
             parent.executes(ctx -> {
-                A result = parseFromContext(ctx, parser, arguments);
+                A result = parseFromContext(ctx, parser, arguments, index);
                 executor.accept(ctx.getSource(), result);
                 return com.mojang.brigadier.Command.SINGLE_SUCCESS;
             });
+        }
+        if (index >= arguments.size()) {
             return;
         }
 
         Argument<?> arg = arguments.get(index);
+        if (arg.isGreedy() && index != arguments.size() - 1) {
+            throw new IllegalArgumentException("Greedy argument '" + arg.getName() + "' must be last");
+        }
         ArgumentType<?> brigadierType = toBrigadierType(arg);
         String argName = arg.getName() + index; // Ensure unique names
 
         RequiredArgumentBuilder<S, ?> argNode = argument(argName, brigadierType);
-        argNode.suggests(createSuggestionProvider(arg));
-        buildArgumentChain(argNode, parser, arguments, index + 1, executor);
+        argNode.suggests(createSuggestionProvider(arguments, index, commandPath));
+        buildArgumentChain(argNode, parser, arguments, index + 1, executor, commandPath);
         parent.then(argNode);
     }
 
     private static <S, A> A parseFromContext(
             CommandContext<S> ctx,
             Command.Parser<A> parser,
-            List<Argument<?>> arguments) throws CommandSyntaxException {
-        // Extract arguments from Brigadier context and build args array
-        String[] args = new String[arguments.size()];
-        for (int i = 0; i < arguments.size(); i++) {
-            Argument<?> arg = arguments.get(i);
-            String argName = arg.getName() + i;
-            try {
-                Object value = ctx.getArgument(argName, Object.class);
-                args[i] = String.valueOf(value);
-            } catch (IllegalArgumentException e) {
-                args[i] = "";
-            }
-        }
-        return parseAndGetFromArgs(args, parser);
+            List<Argument<?>> arguments,
+            int argumentCount) throws CommandSyntaxException {
+        return parseAndGetFromArgs(readArguments(ctx, arguments, argumentCount).toArray(new String[0]), parser);
     }
 
-    private static <A> A parseAndGet(CommandContext<?> ctx, Command.Parser<A> parser) throws CommandSyntaxException {
-        // For commands with no arguments
-        String[] emptyArgs = new String[0];
-        Either<CommandFailure<A>, io.typst.command.CommandSuccess<A>> result =
-                Command.parse(emptyArgs, parser);
-
-        if (result instanceof Either.Right) {
-            return ((Either.Right<CommandFailure<A>, io.typst.command.CommandSuccess<A>>) result)
-                    .getRight()
-                    .getCommand();
-        } else {
-            CommandFailure<A> failure = ((Either.Left<CommandFailure<A>, io.typst.command.CommandSuccess<A>>) result)
-                    .getLeft();
-            throw createException(failure);
+    private static List<String> readArguments(CommandContext<?> ctx, List<Argument<?>> arguments, int argumentCount) {
+        List<String> tokens = new ArrayList<>();
+        for (int i = 0; i < argumentCount; i++) {
+            Argument<?> argument = arguments.get(i);
+            String value = String.valueOf(ctx.getArgument(argument.getName() + i, Object.class));
+            if (argument.isGreedy()) {
+                tokens.addAll(splitGreedy(value));
+            } else {
+                tokens.add(value);
+            }
         }
+        return tokens;
+    }
+
+    private static List<String> splitGreedy(String input) {
+        return Arrays.stream(input.split("\\p{javaWhitespace}+"))
+                .filter(token -> !token.isEmpty())
+                .collect(Collectors.toList());
     }
 
     private static <A> A parseAndGetFromArgs(String[] args, Command.Parser<A> parser) throws CommandSyntaxException {
@@ -216,6 +209,9 @@ public class BrigadierCommands {
     }
 
     private static ArgumentType<?> toBrigadierType(Argument<?> argument) {
+        if (argument.isGreedy()) {
+            return StringArgumentType.greedyString();
+        }
         Class<?> type = argument.getClassType();
 
         if (type == Integer.class || type == int.class) {
@@ -228,34 +224,69 @@ public class BrigadierCommands {
             return DoubleArgumentType.doubleArg();
         } else if (type == Boolean.class || type == boolean.class) {
             return BoolArgumentType.bool();
-        } else if (type == List.class) {
-            // For greedy string arguments (strsArg)
-            return StringArgumentType.greedyString();
         } else {
             // Default to string for String.class and unknown types
             return StringArgumentType.string();
         }
     }
 
-    private static <S> SuggestionProvider<S> createSuggestionProvider(Argument<?> argument) {
+    private static <S> SuggestionProvider<S> createSuggestionProvider(
+            List<Argument<?>> arguments, int index, List<String> commandPath) {
+        Argument<?> argument = arguments.get(index);
         return (ctx, builder) -> {
-            // Create ParseContext for the tab completer
-            // Note: CommandSource is created with empty ID since Brigadier's source type <S>
-            // may not be directly convertible to CommandSource
+            List<String> tokens = new ArrayList<>(commandPath);
+            tokens.addAll(readArguments(ctx, arguments, index));
+            SuggestionsBuilder completionBuilder = builder;
+            if (argument.isGreedy()) {
+                String input = builder.getInput();
+                int tokenStart = input.length();
+                while (tokenStart > builder.getStart() && !Character.isWhitespace(input.charAt(tokenStart - 1))) {
+                    tokenStart--;
+                }
+                tokens.addAll(splitGreedy(input.substring(builder.getStart(), tokenStart)));
+                completionBuilder = builder.createOffset(tokenStart);
+            }
+            tokens.add(completionBuilder.getRemaining());
             ParseContext parseContext = new ParseContext(
                     new CommandSource(""),
-                    Collections.emptyList()
+                    Collections.unmodifiableList(tokens)
             );
 
-            // Get completions from the Argument's contextual tab completer
             List<String> completions = argument.getContextualTabCompleter().apply(parseContext);
-
-            // Add all completions to the suggestions builder
+            String remaining = completionBuilder.getRemaining();
+            String prefix = (argument.isGreedy() ? remaining : readCompletionPrefix(remaining))
+                    .toLowerCase(Locale.ROOT);
             for (String completion : completions) {
-                builder.suggest(completion);
+                if (completion.toLowerCase(Locale.ROOT).startsWith(prefix)) {
+                    completionBuilder.suggest(argument.isGreedy()
+                            ? completion
+                            : StringArgumentType.escapeIfRequired(completion));
+                }
             }
 
-            return builder.buildFuture();
+            return completionBuilder.buildFuture();
         };
+    }
+
+    private static String readCompletionPrefix(String input) throws CommandSyntaxException {
+        if (input.isEmpty() || !StringReader.isQuotedStringStart(input.charAt(0))) {
+            return input;
+        }
+        try {
+            return new StringReader(input).readString();
+        } catch (CommandSyntaxException exception) {
+            if (exception.getType() != CommandSyntaxException.BUILT_IN_EXCEPTIONS.readerExpectedEndOfQuote()) {
+                throw exception;
+            }
+            // Complete the open quote for the native reader. A trailing escape is still being typed.
+            int escapeStart = input.length();
+            while (escapeStart > 0 && input.charAt(escapeStart - 1) == '\\') {
+                escapeStart--;
+            }
+            if ((input.length() - escapeStart) % 2 != 0) {
+                input = input.substring(0, input.length() - 1);
+            }
+            return new StringReader(input + input.charAt(0)).readString();
+        }
     }
 }

@@ -64,6 +64,6 @@ public enum LangKey {
     }
 
     public static LangKey getJVMDefaultLanguage() {
-        return Locale.getDefault().getLanguage().equals("ko_kr") ? KOREAN : ENGLISH;
+        return getLanguageKeyFrom(Locale.getDefault().getLanguage());
     }
 }

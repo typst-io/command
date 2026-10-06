@@ -5,6 +5,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException
 import io.typst.command.Command
 import io.typst.command.Command.pair
 import io.typst.command.StandardArguments.*
+import java.util.Optional
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -209,5 +210,78 @@ class BrigadierCommandsTest {
 
         assertThat(suggestions.list.map { it.text })
             .containsExactlyInAnyOrder("diamond", "emerald", "gold", "iron")
+    }
+
+    @Test
+    fun `allow an optional argument to be omitted`() {
+        val command = Command.argument({ value: Optional<Int> -> value }, intArg.asOptional())
+        assertThat(Command.parseO(emptyArray(), command)).contains(Optional.empty())
+        val results = mutableListOf<Optional<Int>>()
+        val dispatcher = CommandDispatcher<Unit>()
+        dispatcher.register(BrigadierCommands.from("optional", command) { _, result ->
+            results.add(result)
+        })
+
+        dispatcher.execute("optional", Unit)
+
+        assertThat(results).containsExactly(Optional.empty<Int>())
+    }
+
+    @Test
+    fun `preserve token boundaries for a greedy strings argument`() {
+        val command = Command.argument({ values: List<String> -> values }, strsArg)
+        assertThat(Command.parseO(arrayOf("alpha", "beta"), command)).contains(listOf("alpha", "beta"))
+        val results = mutableListOf<List<String>>()
+        val dispatcher = CommandDispatcher<Unit>()
+        dispatcher.register(BrigadierCommands.from("echo", command) { _, result ->
+            results.add(result)
+        })
+
+        dispatcher.execute("echo alpha beta", Unit)
+
+        assertThat(results).containsExactly(listOf("alpha", "beta"))
+    }
+
+    @Test
+    fun `allow a greedy strings argument to consume zero tokens`() {
+        val command = Command.argument({ values: List<String> -> values }, strsArg)
+        assertThat(Command.parseO(emptyArray(), command)).contains(emptyList())
+        val results = mutableListOf<List<String>>()
+        val dispatcher = CommandDispatcher<Unit>()
+        dispatcher.register(BrigadierCommands.from("echo", command) { _, result ->
+            results.add(result)
+        })
+
+        dispatcher.execute("echo", Unit)
+
+        assertThat(results).containsExactly(emptyList())
+    }
+
+    @Test
+    fun `filter argument suggestions by the typed prefix`() {
+        val argument = strArg.withTabCompletes { listOf("diamond", "dirt", "gold") }
+        val command = Command.argument({ value: String -> value }, argument)
+        val dispatcher = CommandDispatcher<Unit>()
+        dispatcher.register(BrigadierCommands.from("give", command) { _, _ -> })
+
+        val suggestions = dispatcher.getCompletionSuggestions(dispatcher.parse("give di", Unit)).join()
+
+        assertThat(suggestions.list.map { it.text }).containsExactly("diamond", "dirt")
+    }
+
+    @Test
+    fun `pass preceding arguments to a contextual tab completer`() {
+        val contextualArgument = strArg.withContextualTabCompleter { context ->
+            if (context.args.contains("diamond")) listOf("sharpness") else emptyList()
+        }
+        val command = Command.argument({ item: String, enchantment: String -> "$item:$enchantment" }, strArg, contextualArgument)
+        val results = mutableListOf<String>()
+        val dispatcher = CommandDispatcher<Unit>()
+        dispatcher.register(BrigadierCommands.from("enchant", command) { _, result -> results.add(result) })
+
+        val suggestions = dispatcher.getCompletionSuggestions(dispatcher.parse("enchant diamond ", Unit)).join()
+
+        assertThat(suggestions.list.map { it.text }).containsExactly("sharpness")
+        assertThat(results).isEmpty()
     }
 }

@@ -211,7 +211,9 @@ public interface Command<A> {
                 args -> {
                     Tuple2<Optional<A>, List<String>> aPair = argA.getParser().apply(args);
                     Tuple2<Optional<B>, List<String>> bPair = argB.getParser().apply(aPair.getB());
-                    return new Tuple2<>(Option.from(aPair.getA().flatMap(a -> bPair.getA().map(b -> f.apply(a, b)))), bPair.getB());
+                    Option<T> value = aPair.getA().flatMap(a -> bPair.getA().<Option<T>>map(b -> new Option.Some<>(f.apply(a, b))))
+                            .orElseGet(Option.None::new);
+                    return new Tuple2<>(value, bPair.getB());
                 },
                 Arrays.asList(argA, argB),
                 "",
@@ -225,7 +227,9 @@ public interface Command<A> {
                     Tuple2<Optional<A>, List<String>> aPair = argA.getParser().apply(args);
                     Tuple2<Optional<B>, List<String>> bPair = argB.getParser().apply(aPair.getB());
                     Tuple2<Optional<C>, List<String>> cPair = argC.getParser().apply(bPair.getB());
-                    return new Tuple2<>(Option.from(aPair.getA().flatMap(a -> bPair.getA().flatMap(b -> cPair.getA().map(c -> f.apply(a, b, c))))), cPair.getB());
+                    Option<T> value = aPair.getA().flatMap(a -> bPair.getA().flatMap(b -> cPair.getA().<Option<T>>map(c -> new Option.Some<>(f.apply(a, b, c)))))
+                            .orElseGet(Option.None::new);
+                    return new Tuple2<>(value, cPair.getB());
                 },
                 Arrays.asList(argA, argB, argC),
                 "",
@@ -240,7 +244,9 @@ public interface Command<A> {
                     Tuple2<Optional<B>, List<String>> bPair = argB.getParser().apply(aPair.getB());
                     Tuple2<Optional<C>, List<String>> cPair = argC.getParser().apply(bPair.getB());
                     Tuple2<Optional<D>, List<String>> dPair = argD.getParser().apply(cPair.getB());
-                    return new Tuple2<>(Option.from(aPair.getA().flatMap(a -> bPair.getA().flatMap(b -> cPair.getA().flatMap(c -> dPair.getA().map(d -> f.apply(a, b, c, d)))))), dPair.getB());
+                    Option<T> value = aPair.getA().flatMap(a -> bPair.getA().flatMap(b -> cPair.getA().flatMap(c -> dPair.getA().<Option<T>>map(d -> new Option.Some<>(f.apply(a, b, c, d))))))
+                            .orElseGet(Option.None::new);
+                    return new Tuple2<>(value, dPair.getB());
                 },
                 Arrays.asList(argA, argB, argC, argD),
                 "",
@@ -256,7 +262,9 @@ public interface Command<A> {
                     Tuple2<Optional<C>, List<String>> cPair = argC.getParser().apply(bPair.getB());
                     Tuple2<Optional<D>, List<String>> dPair = argD.getParser().apply(cPair.getB());
                     Tuple2<Optional<E>, List<String>> ePair = argE.getParser().apply(dPair.getB());
-                    return new Tuple2<>(Option.from(aPair.getA().flatMap(a -> bPair.getA().flatMap(b -> cPair.getA().flatMap(c -> dPair.getA().flatMap(d -> ePair.getA().map(e -> f.apply(a, b, c, d, e))))))), ePair.getB());
+                    Option<T> value = aPair.getA().flatMap(a -> bPair.getA().flatMap(b -> cPair.getA().flatMap(c -> dPair.getA().flatMap(d -> ePair.getA().<Option<T>>map(e -> new Option.Some<>(f.apply(a, b, c, d, e)))))))
+                            .orElseGet(Option.None::new);
+                    return new Tuple2<>(value, ePair.getB());
                 },
                 Arrays.asList(argA, argB, argC, argD, argE),
                 "",
@@ -273,7 +281,9 @@ public interface Command<A> {
                     Tuple2<Optional<D>, List<String>> dPair = argD.getParser().apply(cPair.getB());
                     Tuple2<Optional<E>, List<String>> ePair = argE.getParser().apply(dPair.getB());
                     Tuple2<Optional<F>, List<String>> fPair = argF.getParser().apply(ePair.getB());
-                    return new Tuple2<>(Option.from(aPair.getA().flatMap(a -> bPair.getA().flatMap(b -> cPair.getA().flatMap(c -> dPair.getA().flatMap(d -> ePair.getA().flatMap(e -> fPair.getA().map(fv -> f.apply(a, b, c, d, e, fv)))))))), fPair.getB());
+                    Option<T> value = aPair.getA().flatMap(a -> bPair.getA().flatMap(b -> cPair.getA().flatMap(c -> dPair.getA().flatMap(d -> ePair.getA().flatMap(e -> fPair.getA().<Option<T>>map(fv -> new Option.Some<>(f.apply(a, b, c, d, e, fv))))))))
+                            .orElseGet(Option.None::new);
+                    return new Tuple2<>(value, fPair.getB());
                 },
                 Arrays.asList(argA, argB, argC, argD, argE, argF),
                 "",
@@ -291,7 +301,9 @@ public interface Command<A> {
                     Tuple2<Optional<E>, List<String>> ePair = argE.getParser().apply(dPair.getB());
                     Tuple2<Optional<F>, List<String>> fPair = argF.getParser().apply(ePair.getB());
                     Tuple2<Optional<G>, List<String>> gPair = argG.getParser().apply(fPair.getB());
-                    return new Tuple2<>(Option.from(aPair.getA().flatMap(a -> bPair.getA().flatMap(b -> cPair.getA().flatMap(c -> dPair.getA().flatMap(d -> ePair.getA().flatMap(e -> fPair.getA().flatMap(fv -> gPair.getA().map(g -> f.apply(a, b, c, d, e, fv, g))))))))), gPair.getB());
+                    Option<T> value = aPair.getA().flatMap(a -> bPair.getA().flatMap(b -> cPair.getA().flatMap(c -> dPair.getA().flatMap(d -> ePair.getA().flatMap(e -> fPair.getA().flatMap(fv -> gPair.getA().<Option<T>>map(g -> new Option.Some<>(f.apply(a, b, c, d, e, fv, g)))))))))
+                            .orElseGet(Option.None::new);
+                    return new Tuple2<>(value, gPair.getB());
                 },
                 Arrays.asList(argA, argB, argC, argD, argE, argF, argG),
                 "",
@@ -371,35 +383,55 @@ public interface Command<A> {
 
     static <A> CommandTabResult<A> tabCompleteWithIndex(int index, CommandSource source, String[] args, Command<A> command) {
         String arg = args.length > index ? args[index] : "";
-        String arglc = arg.toLowerCase();
+        String arglc = arg.toLowerCase(Locale.ROOT);
         if (command instanceof Command.Mapping) {
             Mapping<A> mapCommand = (Mapping<A>) command;
             // if tail
             if (index >= args.length - 1) {
                 return new CommandTabResult.Suggestions<>(
                         mapCommand.getCommandMap().entrySet().stream()
-                                .filter(pair -> pair.getKey().toLowerCase().startsWith(arglc))
+                                .filter(pair -> pair.getKey().toLowerCase(Locale.ROOT).startsWith(arglc))
                                 .map(pair -> new Tuple2<>(pair.getKey(), Optional.of(pair.getValue())))
                                 .collect(Collectors.toList())
                 );
             } else {
                 Command<A> subCommand = mapCommand.getCommandMap().get(arg);
-                return subCommand != null
-                        ? tabCompleteWithIndex(index + 1, source, args, subCommand)
-                        : new CommandTabResult.Suggestions<>(Collections.emptyList());
+                if (subCommand == null) {
+                    subCommand = mapCommand.getFallback().orElse(null);
+                    return subCommand != null
+                            ? tabCompleteWithIndex(index, source, args, subCommand)
+                            : new CommandTabResult.Suggestions<>(Collections.emptyList());
+                }
+                return tabCompleteWithIndex(index + 1, source, args, subCommand);
             }
         } else if (command instanceof Parser) {
             Parser<A> parser = (Parser<A>) command;
             String lastArgument = args.length >= 1 ? args[args.length - 1] : "";
             int pos = args.length - index - 1;
             List<Argument<?>> arguments = parser.getArguments();
+            for (int i = 0; i < arguments.size(); i++) {
+                if (arguments.get(i).isGreedy() && pos >= i) {
+                    pos = i;
+                    break;
+                }
+            }
+            if (pos >= arguments.size()) {
+                // The final argument is the partial input for the caller's custom completer.
+                String[] completedArgs = Arrays.copyOf(args, args.length - 1);
+                Either<CommandFailure<A>, CommandSuccess<A>> parsed = parseWithIndex(index, completedArgs, parser);
+                if (parsed instanceof Either.Right) {
+                    CommandSuccess<A> success = ((Either.Right<CommandFailure<A>, CommandSuccess<A>>) parsed).getRight();
+                    return new CommandTabResult.Present<>(args, success.getCommand());
+                }
+                return new CommandTabResult.Suggestions<>(Collections.emptyList());
+            }
             Function<ParseContext, List<String>> tabCompleter = arguments.size() > pos && pos >= 0
                     ? arguments.get(pos).getContextualTabCompleter()
                     : null;
-            String lowerArgument = lastArgument.toLowerCase();
+            String lowerArgument = lastArgument.toLowerCase(Locale.ROOT);
             List<Tuple2<String, Optional<Command<A>>>> tabCompletes = tabCompleter != null
                     ? tabCompleter.apply(new ParseContext(source, Arrays.asList(args))).stream()
-                    .filter(s -> s.toLowerCase().startsWith(lowerArgument))
+                    .filter(s -> s.toLowerCase(Locale.ROOT).startsWith(lowerArgument))
                     .map(s -> new Tuple2<>(s, Optional.of(command)))
                     .collect(Collectors.toList())
                     : Collections.emptyList();
@@ -439,7 +471,7 @@ public interface Command<A> {
     static <A> List<Entry<List<String>, Command<A>>> getEntries(Command<A> cmd) {
         if (cmd instanceof Command.Mapping) {
             Mapping<A> mapping = (Mapping<A>) cmd;
-            return mapping.getCommandMap().entrySet().stream()
+            Stream<Entry<List<String>, Command<A>>> namedEntries = mapping.getCommandMap().entrySet().stream()
                     .flatMap(pair -> {
                         String key = pair.getKey();
                         Command<A> subCmd = pair.getValue();
@@ -456,8 +488,11 @@ public interface Command<A> {
                                     );
                                 })
                                 : Stream.of(new SimpleEntry<>(singletonList(key), subCmd));
-                    })
-                    .collect(Collectors.toList());
+                    });
+            Stream<Entry<List<String>, Command<A>>> fallbackEntries = mapping.getFallback()
+                    .map(fallback -> getEntries(fallback).stream())
+                    .orElseGet(Stream::empty);
+            return Stream.concat(namedEntries, fallbackEntries).collect(Collectors.toList());
         } else if (cmd instanceof Command.Parser) {
 //            Parser<A> parser = (Parser<A>) cmd;
             return singletonList(new SimpleEntry<>(Collections.emptyList(), cmd));

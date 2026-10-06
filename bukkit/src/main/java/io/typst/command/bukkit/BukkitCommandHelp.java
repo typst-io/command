@@ -1,6 +1,5 @@
 package io.typst.command.bukkit;
 
-import io.typst.command.Argument;
 import io.typst.command.CommandHelp;
 import io.typst.command.CommandSpec;
 import lombok.Value;
@@ -30,17 +29,12 @@ public class BukkitCommandHelp {
 
     public static String format(BukkitCommandHelp help) {
         CommandSpec spec = help.getSpec();
-        String permission = spec.getPermission();
-        // check permission
-        if (permission.isEmpty() || help.getSender().hasPermission(permission)) {
-            CommandSpec newSpec = help.getLanguage().equalsIgnoreCase("ko_kr")
-                    ? spec.withArguments(spec.getArguments().stream()
-                    .map(arg -> arg.withName(translateToKor(arg.getName())))
-                    .collect(Collectors.toList()))
-                    : spec;
-            return CommandHelp.format(help.toHelp().withSpec(newSpec));
-        }
-        return "";
+        CommandSpec newSpec = help.getLanguage().equalsIgnoreCase("ko_kr")
+                ? spec.withArguments(spec.getArguments().stream()
+                .map(arg -> arg.withName(translateToKor(arg.getName())))
+                .collect(Collectors.toList()))
+                : spec;
+        return CommandHelp.format(help.toHelp().withSpec(newSpec));
     }
 
     public static String translateToKor(String argumentName) {
